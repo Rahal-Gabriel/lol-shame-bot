@@ -103,4 +103,16 @@ Copy `.env.example` to `.env`:
 
 **CI:** `.github/workflows/ci.yml` roda `npm ci → lint → test` em cada push/PR.
 
-À medida que features forem adicionadas (Dia 2+), documentar os módulos aqui:
+### Módulos
+
+**`src/config.ts`** — `requireEnv(key)`: leitura de variáveis obrigatórias de ambiente.
+
+**`src/riot.ts`** — cliente da Riot API (região Americas/BR1):
+- `getAccountByRiotId(gameName, tagLine)` → `{ puuid }`
+- `getLastRankedMatchId(puuid)` → `string | null` (queue 420 = Ranked Solo/Duo)
+- `getMatchResult(matchId, puuid)` → `MatchResult`
+
+**`src/shame.ts`** — lógica pura de detecção:
+- `isRankedDefeat(match: MatchResult)` → `boolean` (queue 420 + `won === false`)
+
+**`tests/`** — vitest com axios mockado via `vi.mock('axios')` + `vi.mocked(axios.get)`.
