@@ -104,9 +104,6 @@ client.on('error', (err) => log('error', err.message));
 client.on('shardReconnecting', () => log('warn', 'reconectando ao Discord...'));
 client.on('shardResume', () => {
   log('info', 'reconectado ao Discord');
-  client.channels.fetch(channelId)
-    .then(ch => { if (ch) (ch as import('discord.js').TextChannel).send('✅ bot voltou online.'); })
-    .catch(() => undefined);
 });
 
 client.once('clientReady', async (c) => {
