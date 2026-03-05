@@ -76,7 +76,8 @@ describe('pollPlayer', () => {
     mockedSendMessage.mockResolvedValueOnce(undefined);
 
     const state = { lastMatchId: 'BR1_199' as string | null };
-    await pollPlayer(mockClient, 'ch-1', 'puuid-abc', 'Gabriel', state);
+    const ps = { current: { wins: 0, losses: 0, streak: 0 } };
+    await pollPlayer(mockClient, 'ch-1', 'puuid-abc', 'Gabriel', state, ps);
 
     expect(mockedSendMessage).toHaveBeenCalledOnce();
     expect(state.lastMatchId).toBe('BR1_200');
@@ -86,7 +87,8 @@ describe('pollPlayer', () => {
     mockedGetLastRankedMatchId.mockResolvedValueOnce('BR1_199');
 
     const state = { lastMatchId: 'BR1_199' as string | null };
-    await pollPlayer(mockClient, 'ch-1', 'puuid-abc', 'Gabriel', state);
+    const ps = { current: { wins: 0, losses: 0, streak: 0 } };
+    await pollPlayer(mockClient, 'ch-1', 'puuid-abc', 'Gabriel', state, ps);
 
     expect(mockedSendMessage).not.toHaveBeenCalled();
     expect(state.lastMatchId).toBe('BR1_199');
@@ -98,7 +100,8 @@ describe('pollPlayer', () => {
     mockedSendMessage.mockResolvedValueOnce(undefined);
 
     const state = { lastMatchId: 'BR1_199' as string | null };
-    await pollPlayer(mockClient, 'ch-1', 'puuid-abc', 'Gabriel', state);
+    const ps = { current: { wins: 0, losses: 0, streak: 0 } };
+    await pollPlayer(mockClient, 'ch-1', 'puuid-abc', 'Gabriel', state, ps);
 
     expect(mockedSendMessage).toHaveBeenCalledOnce();
     expect(state.lastMatchId).toBe('BR1_200');

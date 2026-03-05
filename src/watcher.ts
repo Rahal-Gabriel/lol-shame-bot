@@ -4,6 +4,7 @@ import { isRankedDefeat, buildShameMessage } from './shame';
 import { sendMessage } from './discord';
 import { buildLossEmbed, buildWinEmbed } from './embed';
 import { withRetry } from './retry';
+import { PlayerStats, updateStats } from './stats';
 
 const RIOT_RETRIES = 3;
 const RIOT_RETRY_DELAY_MS = 2_000;
@@ -33,7 +34,8 @@ export async function pollPlayer(
   channelId: string,
   puuid: string,
   gameName: string,
-  state: { lastMatchId: string | null }
+  state: { lastMatchId: string | null },
+  playerStats: { current: PlayerStats }
 ): Promise<void> {
   const currentMatchId = await withRetry(
     () => getLastRankedMatchId(puuid),
@@ -50,7 +52,10 @@ export async function pollPlayer(
     RIOT_RETRIES,
     RIOT_RETRY_DELAY_MS
   );
-  const embed = isRankedDefeat(match)
+  const defeat = isRankedDefeat(match);
+  playerStats.current = updateStats(playerStats.current, !defeat);
+
+  const embed = defeat
     ? buildLossEmbed(gameName, match)
     : buildWinEmbed(gameName, match);
 

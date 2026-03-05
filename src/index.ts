@@ -7,6 +7,7 @@ import { pollPlayer } from './watcher';
 import { loadState, saveState } from './store';
 import { loadPlayers, Player } from './players';
 import { addPlayer, removePlayer, formatPlayerList } from './commands';
+import { emptyStats, formatStats } from './stats';
 import { writeFile } from 'fs/promises';
 
 const token = requireEnv('DISCORD_TOKEN');
@@ -30,6 +31,10 @@ const slashCommands = [
   new SlashCommandBuilder()
     .setName('list-players')
     .setDescription('Lista todos os jogadores monitorados'),
+  new SlashCommandBuilder()
+    .setName('stats')
+    .setDescription('Mostra estatísticas de um jogador')
+    .addStringOption(o => o.setName('nome').setDescription('Nome#Tag (ex: GatoMakonha#T2F)').setRequired(true)),
 ].map(c => c.toJSON());
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -46,7 +51,8 @@ function parseNomeTag(input: string): { gameName: string; tagLine: string } | nu
 
 async function handleInteraction(
   interaction: ChatInputCommandInteraction,
-  players: Player[]
+  players: Player[],
+  statsMap: Record<string, ReturnType<typeof emptyStats>>
 ): Promise<Player[]> {
   if (interaction.commandName === 'list-players') {
     await interaction.reply({ content: formatPlayerList(players), ephemeral: true });
@@ -58,6 +64,14 @@ async function handleInteraction(
 
   if (!parsed) {
     await interaction.reply({ content: 'Formato inválido. Use Nome#Tag (ex: GatoMakonha#T2F)', ephemeral: true });
+    return players;
+  }
+
+  const key = `${parsed.gameName}#${parsed.tagLine}`;
+
+  if (interaction.commandName === 'stats') {
+    const s = statsMap[key] ?? emptyStats();
+    await interaction.reply({ content: formatStats(key, s), ephemeral: true });
     return players;
   }
 
@@ -98,21 +112,24 @@ client.once('clientReady', async (c) => {
   const resolved = await Promise.all(
     players.map(async (p) => {
       const { puuid } = await getAccountByRiotId(p.gameName, p.tagLine);
-      return { puuid, gameName: p.gameName };
+      return { puuid, gameName: p.gameName, tagLine: p.tagLine };
     })
   );
 
   client.on('interactionCreate', async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
-    players = await handleInteraction(interaction, players);
+    players = await handleInteraction(interaction, players, botState.stats);
   });
 
   const tick = async () => {
-    for (const { puuid, gameName } of resolved) {
+    for (const { puuid, gameName, tagLine } of resolved) {
       try {
+        const key = `${gameName}#${tagLine}`;
         const state = { lastMatchId: botState.byPuuid[puuid] ?? null };
-        await pollPlayer(client, channelId, puuid, gameName, state);
+        const playerStats = { current: botState.stats[key] ?? emptyStats() };
+        await pollPlayer(client, channelId, puuid, gameName, state, playerStats);
         botState.byPuuid[puuid] = state.lastMatchId;
+        botState.stats[key] = playerStats.current;
       } catch (err) {
         console.error(`Erro no poll de ${gameName}:`, err);
       }
