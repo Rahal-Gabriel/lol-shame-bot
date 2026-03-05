@@ -140,6 +140,21 @@ Nenhum arquivo acima de 100 linhas. Zero risco de refatoração obrigatória.
 
 ### Total de testes: 21 — todos passando.
 
+## Dia 6 — Hardening ✓
+
+- `src/retry.ts` — `withRetry(fn, retries, delayMs)` com TDD
+- Timeout de 10s em todas as chamadas Riot API
+- Retry 3x com backoff de 2s no poll
+- Deprecation `ready` → `clientReady` corrigido
+- 32 testes, 0 warnings, build limpo
+
+## Dia 7 — Deploy em Produção ✓
+
+- Dockerfile multi-stage: build com tsc, runtime sem devDeps
+- Deploy no Railway via GitHub
+- Bot ativo e disparando mensagens no Discord
+- **Primeiro uso real documentado:** GatoMakonha#T2F monitorado em produção
+
 ## Dia 5 — Interface de Saída (Bot Discord) ✓
 
 - `src/discord.ts` — `sendMessage(client, channelId, message)`
