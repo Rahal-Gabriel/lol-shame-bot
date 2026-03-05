@@ -139,3 +139,12 @@ Copy `.env.example` to `.env`:
 Nenhum arquivo acima de 100 linhas. Zero risco de refatoração obrigatória.
 
 ### Total de testes: 21 — todos passando.
+
+## Dia 5 — Interface de Saída (Bot Discord) ✓
+
+- `src/discord.ts` — `sendMessage(client, channelId, message)`
+- `src/watcher.ts` — `pollPlayer` com state tracking
+- `src/index.ts` — bot inicializado com poll imediato no startup + loop de 60s
+- Mensagem de shame na derrota ranked
+- Mensagem de tristeza na vitória ranked
+- **Critério de saída:** Bot respondendo no servidor de teste ✓
