@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { updateStats, formatStats, emptyStats } from '../src/stats';
+import { updateStats, formatStats, emptyStats } from '../../src/players/stats';
 
 describe('emptyStats', () => {
   it('returns zeroed stats', () => {

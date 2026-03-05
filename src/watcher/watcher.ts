@@ -1,8 +1,8 @@
 import { Queue } from 'bullmq';
-import { getLastRankedMatchId, getMatchResult } from './riot';
+import { getLastRankedMatchId, getMatchResult } from '../riot/client';
 import { isRankedDefeat, buildShameMessage } from './shame';
-import { withRetry } from './retry';
-import { MatchJobData } from './queue';
+import { withRetry } from '../infra/retry';
+import { MatchJobData } from '../queue/queue';
 
 const RIOT_RETRIES = 3;
 const RIOT_RETRY_DELAY_MS = 2_000;

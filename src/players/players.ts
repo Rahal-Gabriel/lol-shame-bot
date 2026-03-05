@@ -1,5 +1,5 @@
 import Redis from 'ioredis';
-import { log } from './logger';
+import { log } from '../logger';
 
 export interface Player {
   gameName: string;

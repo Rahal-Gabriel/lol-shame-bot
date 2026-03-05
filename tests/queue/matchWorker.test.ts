@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { processMatchJob } from '../src/matchWorker';
-import type { MatchJobData } from '../src/queue';
-import type { BotState } from '../src/store';
-import * as riot from '../src/riot';
-import * as discord from '../src/discord';
-import * as store from '../src/store';
+import { processMatchJob } from '../../src/queue/matchWorker';
+import type { MatchJobData } from '../../src/queue/queue';
+import type { BotState } from '../../src/infra/store';
+import * as riot from '../../src/riot/client';
+import * as discord from '../../src/discord/client';
+import * as store from '../../src/infra/store';
 
-vi.mock('../src/riot');
-vi.mock('../src/discord');
-vi.mock('../src/store');
-vi.mock('../src/retry', () => ({
+vi.mock('../../src/riot/client');
+vi.mock('../../src/discord/client');
+vi.mock('../../src/infra/store');
+vi.mock('../../src/infra/retry', () => ({
   withRetry: (fn: () => unknown) => fn(),
 }));
 

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { addPlayer, removePlayer, formatPlayerList, resolveCheckNow } from '../src/commands';
-import { Player } from '../src/players';
+import { addPlayer, removePlayer, formatPlayerList, resolveCheckNow } from '../../src/discord/commands';
+import { Player } from '../../src/players/players';
 
 const base: Player[] = [
   { gameName: 'GatoMakonha', tagLine: 'T2F' },

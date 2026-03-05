@@ -1,4 +1,4 @@
-import { Player } from './players';
+import { Player } from '../players/players';
 
 export function addPlayer(players: Player[], player: Player): Player[] {
   const exists = players.some(

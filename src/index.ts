@@ -3,16 +3,16 @@ import { join } from 'path';
 import { readFile } from 'fs/promises';
 import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { requireEnv } from './config';
-import { getAccountByRiotId } from './riot';
-import { pollPlayer } from './watcher';
-import { loadState } from './store';
-import { loadPlayers, savePlayers, Player } from './players';
-import { addPlayer, removePlayer, formatPlayerList, resolveCheckNow } from './commands';
-import { emptyStats, formatStats } from './stats';
-import { createMatchQueue } from './queue';
-import { createWorker } from './matchWorker';
+import { getAccountByRiotId } from './riot/client';
+import { pollPlayer } from './watcher/watcher';
+import { loadState } from './infra/store';
+import { loadPlayers, savePlayers, Player } from './players/players';
+import { addPlayer, removePlayer, formatPlayerList, resolveCheckNow } from './discord/commands';
+import { emptyStats, formatStats } from './players/stats';
+import { createMatchQueue } from './queue/queue';
+import { createWorker } from './queue/matchWorker';
 import { log } from './logger';
-import { startHealthServer } from './health';
+import { startHealthServer } from './infra/health';
 
 const HEALTH_PORT = parseInt(process.env.PORT ?? '3000', 10);
 

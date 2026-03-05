@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isRankedDefeat, buildShameMessage, buildWinMessage, SHAME_MESSAGES, WIN_MESSAGES } from '../src/shame';
+import { isRankedDefeat, buildShameMessage, buildWinMessage, SHAME_MESSAGES, WIN_MESSAGES } from '../../src/watcher/shame';
 
 const base = { matchId: 'BR1_1', champion: 'Yasuo', kills: 2, deaths: 8, assists: 1, gameDurationSecs: 1800 };
 

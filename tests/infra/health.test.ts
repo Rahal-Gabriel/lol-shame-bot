@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { handleHealthRequest } from '../src/health';
+import { handleHealthRequest } from '../../src/infra/health';
 import { IncomingMessage, ServerResponse } from 'http';
 
 afterEach(() => vi.restoreAllMocks());

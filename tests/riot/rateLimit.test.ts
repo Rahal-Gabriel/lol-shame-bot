@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { RateLimiter } from '../src/rateLimit';
+import { RateLimiter } from '../../src/riot/rateLimit';
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());

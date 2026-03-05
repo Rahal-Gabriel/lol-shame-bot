@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { sendMessage } from '../src/discord';
+import { sendMessage } from '../../src/discord/client';
 
 const mockSend = vi.fn();
 const mockFetch = vi.fn();

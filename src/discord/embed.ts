@@ -1,6 +1,6 @@
 import { EmbedBuilder } from 'discord.js';
-import { MatchResult } from './shame';
-import { buildShameMessage, buildWinMessage } from './shame';
+import { MatchResult } from '../watcher/shame';
+import { buildShameMessage, buildWinMessage } from '../watcher/shame';
 
 export function formatDuration(secs: number): string {
   const m = Math.floor(secs / 60);

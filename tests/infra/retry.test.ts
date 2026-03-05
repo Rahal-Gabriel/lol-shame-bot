@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { withRetry } from '../src/retry';
+import { withRetry } from '../../src/infra/retry';
 
 describe('withRetry', () => {
   it('returns the result when the function succeeds on the first try', async () => {

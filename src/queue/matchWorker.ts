@@ -1,13 +1,13 @@
 import { Worker } from 'bullmq';
 import { Client } from 'discord.js';
-import { getMatchResult } from './riot';
-import { isRankedDefeat } from './shame';
-import { buildLossEmbed, buildWinEmbed } from './embed';
-import { sendMessage } from './discord';
-import { withRetry } from './retry';
-import { emptyStats, updateStats } from './stats';
-import { saveState, BotState } from './store';
-import { log } from './logger';
+import { getMatchResult } from '../riot/client';
+import { isRankedDefeat } from '../watcher/shame';
+import { buildLossEmbed, buildWinEmbed } from '../discord/embed';
+import { sendMessage } from '../discord/client';
+import { withRetry } from '../infra/retry';
+import { emptyStats, updateStats } from '../players/stats';
+import { saveState, BotState } from '../infra/store';
+import { log } from '../logger';
 import { MatchJobData, QUEUE_NAME } from './queue';
 
 const RIOT_RETRIES = 3;

@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { hasNewMatch, checkPlayer, pollPlayer } from '../src/watcher';
-import * as riot from '../src/riot';
-import * as discord from '../src/discord';
+import { hasNewMatch, checkPlayer, pollPlayer } from '../../src/watcher/watcher';
+import * as riot from '../../src/riot/client';
+import * as discord from '../../src/discord/client';
 
-vi.mock('../src/riot');
-vi.mock('../src/discord');
+vi.mock('../../src/riot/client');
+vi.mock('../../src/discord/client');
 const mockedGetLastRankedMatchId = vi.mocked(riot.getLastRankedMatchId);
 const mockedGetMatchResult = vi.mocked(riot.getMatchResult);
 

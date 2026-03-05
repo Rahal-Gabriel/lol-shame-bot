@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import axios from 'axios';
-import { getAccountByRiotId, getLastRankedMatchId, getMatchResult } from '../src/riot';
+import { getAccountByRiotId, getLastRankedMatchId, getMatchResult } from '../../src/riot/client';
 
 vi.mock('axios');
 const mockedGet = vi.mocked(axios.get);

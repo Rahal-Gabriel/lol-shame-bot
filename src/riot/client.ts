@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { requireEnv } from './config';
-import { MatchResult } from './shame';
+import { requireEnv } from '../config';
+import { MatchResult } from '../watcher/shame';
 import { RateLimiter } from './rateLimit';
 
 const ACCOUNT_BASE = 'https://americas.api.riotgames.com';

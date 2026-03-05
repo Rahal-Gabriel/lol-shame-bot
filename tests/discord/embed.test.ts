@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { buildLossEmbed, buildWinEmbed, formatDuration } from '../src/embed';
-import { MatchResult } from '../src/shame';
+import { buildLossEmbed, buildWinEmbed, formatDuration } from '../../src/discord/embed';
+import { MatchResult } from '../../src/watcher/shame';
 
 const lossMatch: MatchResult = {
   matchId: 'BR1_1',

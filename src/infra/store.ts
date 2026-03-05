@@ -1,6 +1,6 @@
 import Redis from 'ioredis';
-import { PlayerStats } from './stats';
-import { log } from './logger';
+import { PlayerStats } from '../players/stats';
+import { log } from '../logger';
 
 export interface BotState {
   byPuuid: Record<string, string | null>;

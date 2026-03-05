@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { BotState } from '../src/store';
+import type { BotState } from '../../src/infra/store';
 
 const mockGet = vi.fn();
 const mockSet = vi.fn();
@@ -16,7 +16,7 @@ beforeEach(() => {
 });
 
 async function getStore() {
-  const mod = await import('../src/store');
+  const mod = await import('../../src/infra/store');
   return mod;
 }
 

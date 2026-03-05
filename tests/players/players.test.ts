@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { Player } from '../src/players';
+import type { Player } from '../../src/players/players';
 
 const mockGet = vi.fn();
 const mockSet = vi.fn();
@@ -16,7 +16,7 @@ beforeEach(() => {
 });
 
 async function getPlayers() {
-  return import('../src/players');
+  return import('../../src/players/players');
 }
 
 describe('loadPlayers', () => {
