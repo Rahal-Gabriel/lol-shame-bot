@@ -1,42 +1,60 @@
-import { describe, it, expect, afterEach } from 'vitest';
-import { join } from 'path';
-import { writeFile, rm } from 'fs/promises';
-import { loadPlayers } from '../src/players';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Player } from '../src/players';
 
-const TEST_FILE = join('/tmp', 'lol-shame-bot-test-players.json');
+const mockGet = vi.fn();
+const mockSet = vi.fn();
 
-afterEach(() => rm(TEST_FILE, { force: true }));
+vi.mock('ioredis', () => {
+  const MockRedis = vi.fn().mockImplementation(() => ({ get: mockGet, set: mockSet }));
+  return { default: MockRedis };
+});
+
+beforeEach(() => {
+  vi.resetModules();
+  mockGet.mockReset();
+  mockSet.mockReset();
+});
+
+async function getPlayers() {
+  return import('../src/players');
+}
 
 describe('loadPlayers', () => {
-  it('returns the list of players from the file', async () => {
-    await writeFile(TEST_FILE, JSON.stringify([
-      { gameName: 'GatoMakonha', tagLine: 'T2F' },
-      { gameName: 'Faker', tagLine: 'KR1' },
-    ]));
-
-    const players = await loadPlayers(TEST_FILE);
-
-    expect(players).toHaveLength(2);
-    expect(players[0]).toEqual({ gameName: 'GatoMakonha', tagLine: 'T2F' });
-    expect(players[1]).toEqual({ gameName: 'Faker', tagLine: 'KR1' });
+  it('returns empty array when Redis returns null', async () => {
+    mockGet.mockResolvedValue(null);
+    const { loadPlayers } = await getPlayers();
+    const players = await loadPlayers();
+    expect(players).toEqual([]);
   });
 
-  it('throws when file does not exist', async () => {
-    await expect(loadPlayers('/tmp/nao-existe.json')).rejects.toThrow();
+  it('returns parsed list when Redis has data', async () => {
+    const stored: Player[] = [{ gameName: 'GatoMakonha', tagLine: 'T2F' }];
+    mockGet.mockResolvedValue(JSON.stringify(stored));
+    const { loadPlayers } = await getPlayers();
+    const players = await loadPlayers();
+    expect(players).toEqual(stored);
   });
 
-  it('throws when list is empty', async () => {
-    await writeFile(TEST_FILE, JSON.stringify([]));
-    await expect(loadPlayers(TEST_FILE)).rejects.toThrow('players.json está vazio');
+  it('returns empty array gracefully when Redis throws', async () => {
+    mockGet.mockRejectedValue(new Error('connection refused'));
+    const { loadPlayers } = await getPlayers();
+    const players = await loadPlayers();
+    expect(players).toEqual([]);
+  });
+});
+
+describe('savePlayers', () => {
+  it('calls redis.set with serialized players', async () => {
+    mockSet.mockResolvedValue('OK');
+    const { savePlayers } = await getPlayers();
+    const players: Player[] = [{ gameName: 'GatoMakonha', tagLine: 'T2F' }];
+    await savePlayers(players);
+    expect(mockSet).toHaveBeenCalledWith('bot:players', JSON.stringify(players));
   });
 
-  it('throws when a player is missing gameName', async () => {
-    await writeFile(TEST_FILE, JSON.stringify([{ tagLine: 'BR1' }]));
-    await expect(loadPlayers(TEST_FILE)).rejects.toThrow('gameName');
-  });
-
-  it('throws when a player is missing tagLine', async () => {
-    await writeFile(TEST_FILE, JSON.stringify([{ gameName: 'Foo' }]));
-    await expect(loadPlayers(TEST_FILE)).rejects.toThrow('tagLine');
+  it('does not throw when Redis fails', async () => {
+    mockSet.mockRejectedValue(new Error('write error'));
+    const { savePlayers } = await getPlayers();
+    await expect(savePlayers([])).resolves.toBeUndefined();
   });
 });

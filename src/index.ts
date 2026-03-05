@@ -1,16 +1,16 @@
 import 'dotenv/config';
 import { join } from 'path';
+import { readFile } from 'fs/promises';
 import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { requireEnv } from './config';
 import { getAccountByRiotId } from './riot';
 import { pollPlayer } from './watcher';
 import { loadState, saveState } from './store';
-import { loadPlayers, Player } from './players';
+import { loadPlayers, savePlayers, Player } from './players';
 import { addPlayer, removePlayer, formatPlayerList } from './commands';
 import { emptyStats, formatStats } from './stats';
 import { log } from './logger';
 import { startHealthServer } from './health';
-import { writeFile } from 'fs/promises';
 
 const HEALTH_PORT = parseInt(process.env.PORT ?? '3000', 10);
 
@@ -41,10 +41,6 @@ const slashCommands = [
 ].map(c => c.toJSON());
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-
-async function savePlayers(players: Player[]): Promise<void> {
-  await writeFile(PLAYERS_FILE, JSON.stringify(players, null, 2), 'utf-8');
-}
 
 function parseNomeTag(input: string): { gameName: string; tagLine: string } | null {
   const [gameName, tagLine] = input.split('#');
@@ -119,7 +115,21 @@ client.once('clientReady', async (c) => {
   const rest = new REST().setToken(token);
   await rest.put(Routes.applicationCommands(c.user.id), { body: slashCommands });
 
-  let players = await loadPlayers(PLAYERS_FILE);
+  let players = await loadPlayers();
+
+  // Seed do Redis a partir do players.json na primeira boot
+  if (players.length === 0) {
+    try {
+      const raw = await readFile(PLAYERS_FILE, 'utf-8');
+      const seeded = JSON.parse(raw) as Player[];
+      if (seeded.length > 0) {
+        await savePlayers(seeded);
+        players = seeded;
+        log('info', 'players.json migrado para Redis', { players: players.length });
+      }
+    } catch { /* arquivo não existe, começa vazio */ }
+  }
+
   log('info', 'bot online', { players: players.length });
 
   const botState = await loadState();

@@ -1,23 +1,30 @@
-import { readFile } from 'fs/promises';
+import Redis from 'ioredis';
+import { log } from './logger';
 
 export interface Player {
   gameName: string;
   tagLine: string;
 }
 
-export async function loadPlayers(filePath: string): Promise<Player[]> {
-  const raw = await readFile(filePath, 'utf-8');
-  const list = JSON.parse(raw) as unknown[];
+const redis = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379');
 
-  if (!Array.isArray(list) || list.length === 0) {
-    throw new Error('players.json está vazio');
+const KEY = 'bot:players';
+
+export async function loadPlayers(): Promise<Player[]> {
+  try {
+    const raw = await redis.get(KEY);
+    if (raw === null) return [];
+    return JSON.parse(raw) as Player[];
+  } catch (err) {
+    log('error', 'loadPlayers: falha ao ler do Redis', { error: String(err) });
+    return [];
   }
+}
 
-  for (const entry of list) {
-    const p = entry as Record<string, unknown>;
-    if (!p.gameName) throw new Error('Jogador sem gameName em players.json');
-    if (!p.tagLine) throw new Error('Jogador sem tagLine em players.json');
+export async function savePlayers(players: Player[]): Promise<void> {
+  try {
+    await redis.set(KEY, JSON.stringify(players));
+  } catch (err) {
+    log('error', 'savePlayers: falha ao escrever no Redis', { error: String(err) });
   }
-
-  return list as Player[];
 }
