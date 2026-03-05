@@ -17,17 +17,12 @@ describe('isRankedDefeat', () => {
 
 describe('buildShameMessage', () => {
   it('includes the player name in the message', () => {
-    const msg = buildShameMessage('Gabriel', { matchId: 'BR1_1', won: false, queueId: 420 });
+    const msg = buildShameMessage('Gabriel');
     expect(msg).toContain('Gabriel');
   });
 
-  it('includes the match id in the message', () => {
-    const msg = buildShameMessage('Gabriel', { matchId: 'BR1_999', won: false, queueId: 420 });
-    expect(msg).toContain('BR1_999');
-  });
-
   it('contains one of the shame phrases', () => {
-    const msg = buildShameMessage('Faker', { matchId: 'BR1_1', won: false, queueId: 420 });
+    const msg = buildShameMessage('Faker');
     expect(SHAME_MESSAGES.some(phrase => msg.includes(phrase))).toBe(true);
   });
 
@@ -38,17 +33,12 @@ describe('buildShameMessage', () => {
 
 describe('buildWinMessage', () => {
   it('includes the player name in the message', () => {
-    const msg = buildWinMessage('Gabriel', { matchId: 'BR1_1', won: true, queueId: 420 });
+    const msg = buildWinMessage('Gabriel');
     expect(msg).toContain('Gabriel');
   });
 
-  it('includes the match id in the message', () => {
-    const msg = buildWinMessage('Gabriel', { matchId: 'BR1_999', won: true, queueId: 420 });
-    expect(msg).toContain('BR1_999');
-  });
-
   it('contains one of the win phrases', () => {
-    const msg = buildWinMessage('Faker', { matchId: 'BR1_1', won: true, queueId: 420 });
+    const msg = buildWinMessage('Faker');
     expect(WIN_MESSAGES.some((phrase: string) => msg.includes(phrase))).toBe(true);
   });
 

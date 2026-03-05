@@ -24,7 +24,7 @@ export async function checkPlayer(
 
   if (!isRankedDefeat(match)) return null;
 
-  return buildShameMessage(gameName, match);
+  return buildShameMessage(gameName);
 }
 
 export async function pollPlayer(
@@ -50,8 +50,8 @@ export async function pollPlayer(
     RIOT_RETRY_DELAY_MS
   );
   const message = isRankedDefeat(match)
-    ? buildShameMessage(gameName, match)
-    : buildWinMessage(gameName, match);
+    ? buildShameMessage(gameName)
+    : buildWinMessage(gameName);
 
   await sendMessage(client, channelId, message);
 }

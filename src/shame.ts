@@ -32,9 +32,9 @@ export function isRankedDefeat(match: MatchResult): boolean {
   return match.queueId === RANKED_SOLO_DUO && !match.won;
 }
 
-export function buildShameMessage(gameName: string, match: MatchResult): string {
+export function buildShameMessage(gameName: string): string {
   const phrase = SHAME_MESSAGES[Math.floor(Math.random() * SHAME_MESSAGES.length)];
-  return `🔴 ${gameName} perdeu uma ranked! (${match.matchId}) — ${phrase}`;
+  return `🔴 ${gameName} perdeu uma ranked! — ${phrase}`;
 }
 
 export const WIN_MESSAGES = [
@@ -54,7 +54,7 @@ export const WIN_MESSAGES = [
   'os deuses tiveram pena hoje',
 ];
 
-export function buildWinMessage(gameName: string, match: MatchResult): string {
+export function buildWinMessage(gameName: string): string {
   const phrase = WIN_MESSAGES[Math.floor(Math.random() * WIN_MESSAGES.length)];
-  return `😒 ${gameName} ganhou uma ranked (${match.matchId})... ${phrase}`;
+  return `😒 ${gameName} ganhou uma ranked... ${phrase}`;
 }

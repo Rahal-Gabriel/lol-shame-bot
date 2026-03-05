@@ -40,7 +40,6 @@ describe('checkPlayer', () => {
 
     expect(result).not.toBeNull();
     expect(result).toContain('Gabriel');
-    expect(result).toContain('BR1_200');
   });
 
   it('returns null when there is no new match', async () => {
