@@ -43,20 +43,21 @@ export function buildShameMessage(gameName: string): string {
 }
 
 export const WIN_MESSAGES = [
-  'deve ter sido sorte',
-  'o adversário estava de olho fechado',
-  'até relógio parado acerta duas vezes por dia',
-  'comemorou né? amanhã perde de volta',
-  'vitória suspeita, vou investigar',
-  'os inimigos deixaram ganhar com pena',
-  'uma vitória não faz verão',
-  'tá bom, aproveita que não dura',
-  'foi fácil né? tenta na próxima quando o adversário tiver acordado',
-  'ganhou e nem sabe por quê',
-  'parabéns, agora volta pro seu elo',
-  'fluke clássico',
-  'nem acredito que você ganhou isso',
-  'os deuses tiveram pena hoje',
+  'ainda é um lixo, só ganhou pq o inimigo era pior',
+  'parabéns, você venceu alguém que provavelmente estava jogando com o cotovelo',
+  'vitória suspeita. vou chamar a CBLOL pra investigar',
+  'nem comemora, amanhã você toma 7 de seguida e chora no banheiro',
+  'mogou quem? o time inimigo estava de olho fechado e dormindo na cadeira',
+  'uma vitória não salva uma vida desperdiçada no silver',
+  'o inimigo deixou ganhar com pena. caridade ranked.',
+  'sigma move: ganhar uma partida e achar que virou jogador. delulu.',
+  'você ganhou. os inimigos vão dormir normalmente. você vai dormir achando que presta.',
+  'vitória registrada. irrelevante. continue insignificante.',
+  'nem o próprio time acreditou que você ia ganhar isso',
+  'fluke eterno. screenshot isso pq não se repete.',
+  'os deuses erraram de conta hoje. amanhã voltam a punir você.',
+  'ganhou e ainda assim não inspira ninguém. notável.',
+  'sua KDA continua uma vergonha, mas ok, vitória contada.',
 ];
 
 export function buildWinMessage(gameName: string): string {

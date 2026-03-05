@@ -44,7 +44,7 @@ describe('buildWinMessage', () => {
     expect(WIN_MESSAGES.some((phrase: string) => msg.includes(phrase))).toBe(true);
   });
 
-  it('has at least 5 win phrases', () => {
-    expect(WIN_MESSAGES.length).toBeGreaterThanOrEqual(5);
+  it('has at least 15 win phrases', () => {
+    expect(WIN_MESSAGES.length).toBeGreaterThanOrEqual(15);
   });
 });
