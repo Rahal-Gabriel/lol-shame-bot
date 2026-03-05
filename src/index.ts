@@ -1,11 +1,13 @@
 import 'dotenv/config';
 import { join } from 'path';
-import { Client, GatewayIntentBits } from 'discord.js';
+import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { requireEnv } from './config';
 import { getAccountByRiotId } from './riot';
 import { pollPlayer } from './watcher';
 import { loadState, saveState } from './store';
-import { loadPlayers } from './players';
+import { loadPlayers, Player } from './players';
+import { addPlayer, removePlayer, formatPlayerList } from './commands';
+import { writeFile } from 'fs/promises';
 
 const token = requireEnv('DISCORD_TOKEN');
 const channelId = requireEnv('DISCORD_CHANNEL_ID');
@@ -16,10 +18,79 @@ requireEnv('RIOT_API_KEY');
 const STATE_FILE = join(process.cwd(), 'state.json');
 const PLAYERS_FILE = join(process.cwd(), 'players.json');
 
+const slashCommands = [
+  new SlashCommandBuilder()
+    .setName('add-player')
+    .setDescription('Adiciona um jogador para monitorar')
+    .addStringOption(o => o.setName('nome').setDescription('Nome#Tag (ex: GatoMakonha#T2F)').setRequired(true)),
+  new SlashCommandBuilder()
+    .setName('remove-player')
+    .setDescription('Remove um jogador do monitoramento')
+    .addStringOption(o => o.setName('nome').setDescription('Nome#Tag (ex: GatoMakonha#T2F)').setRequired(true)),
+  new SlashCommandBuilder()
+    .setName('list-players')
+    .setDescription('Lista todos os jogadores monitorados'),
+].map(c => c.toJSON());
+
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-client.once('clientReady', async () => {
-  const players = await loadPlayers(PLAYERS_FILE);
+async function savePlayers(players: Player[]): Promise<void> {
+  await writeFile(PLAYERS_FILE, JSON.stringify(players, null, 2), 'utf-8');
+}
+
+function parseNomeTag(input: string): { gameName: string; tagLine: string } | null {
+  const [gameName, tagLine] = input.split('#');
+  if (!gameName || !tagLine) return null;
+  return { gameName, tagLine };
+}
+
+async function handleInteraction(
+  interaction: ChatInputCommandInteraction,
+  players: Player[]
+): Promise<Player[]> {
+  if (interaction.commandName === 'list-players') {
+    await interaction.reply({ content: formatPlayerList(players), ephemeral: true });
+    return players;
+  }
+
+  const input = interaction.options.getString('nome', true);
+  const parsed = parseNomeTag(input);
+
+  if (!parsed) {
+    await interaction.reply({ content: 'Formato inválido. Use Nome#Tag (ex: GatoMakonha#T2F)', ephemeral: true });
+    return players;
+  }
+
+  if (interaction.commandName === 'add-player') {
+    const updated = addPlayer(players, parsed);
+    if (updated.length === players.length) {
+      await interaction.reply({ content: `${input} já está na lista.`, ephemeral: true });
+    } else {
+      await savePlayers(updated);
+      await interaction.reply({ content: `✅ ${input} adicionado!`, ephemeral: true });
+    }
+    return updated;
+  }
+
+  if (interaction.commandName === 'remove-player') {
+    const updated = removePlayer(players, parsed.gameName, parsed.tagLine);
+    if (updated.length === players.length) {
+      await interaction.reply({ content: `${input} não encontrado na lista.`, ephemeral: true });
+    } else {
+      await savePlayers(updated);
+      await interaction.reply({ content: `🗑️ ${input} removido.`, ephemeral: true });
+    }
+    return updated;
+  }
+
+  return players;
+}
+
+client.once('clientReady', async (c) => {
+  const rest = new REST().setToken(token);
+  await rest.put(Routes.applicationCommands(c.user.id), { body: slashCommands });
+
+  let players = await loadPlayers(PLAYERS_FILE);
   console.log(`lol-shame-bot online — monitorando ${players.length} jogador(es)`);
 
   const botState = await loadState(STATE_FILE);
@@ -30,6 +101,11 @@ client.once('clientReady', async () => {
       return { puuid, gameName: p.gameName };
     })
   );
+
+  client.on('interactionCreate', async (interaction) => {
+    if (!interaction.isChatInputCommand()) return;
+    players = await handleInteraction(interaction, players);
+  });
 
   const tick = async () => {
     for (const { puuid, gameName } of resolved) {
