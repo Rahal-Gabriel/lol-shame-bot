@@ -1,7 +1,7 @@
 import { readFile, writeFile } from 'fs/promises';
 
 export interface BotState {
-  lastMatchId: string | null;
+  byPuuid: Record<string, string | null>;
 }
 
 export async function loadState(filePath: string): Promise<BotState> {
@@ -9,7 +9,7 @@ export async function loadState(filePath: string): Promise<BotState> {
     const raw = await readFile(filePath, 'utf-8');
     return JSON.parse(raw) as BotState;
   } catch {
-    return { lastMatchId: null };
+    return { byPuuid: {} };
   }
 }
 

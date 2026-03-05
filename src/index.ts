@@ -5,32 +5,43 @@ import { requireEnv } from './config';
 import { getAccountByRiotId } from './riot';
 import { pollPlayer } from './watcher';
 import { loadState, saveState } from './store';
-
-const STATE_FILE = join(process.cwd(), 'state.json');
+import { loadPlayers } from './players';
 
 const token = requireEnv('DISCORD_TOKEN');
 const channelId = requireEnv('DISCORD_CHANNEL_ID');
-const gameName = requireEnv('PLAYER_GAME_NAME');
-const tagLine = requireEnv('PLAYER_TAG_LINE');
 const intervalMs = parseInt(process.env.POLL_INTERVAL_MS ?? '60000', 10);
 
 requireEnv('RIOT_API_KEY');
 
+const STATE_FILE = join(process.cwd(), 'state.json');
+const PLAYERS_FILE = join(process.cwd(), 'players.json');
+
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 client.once('clientReady', async () => {
-  console.log(`lol-shame-bot online — monitorando ${gameName}#${tagLine}`);
+  const players = await loadPlayers(PLAYERS_FILE);
+  console.log(`lol-shame-bot online — monitorando ${players.length} jogador(es)`);
 
-  const { puuid } = await getAccountByRiotId(gameName, tagLine);
-  const state = await loadState(STATE_FILE);
+  const botState = await loadState(STATE_FILE);
+
+  const resolved = await Promise.all(
+    players.map(async (p) => {
+      const { puuid } = await getAccountByRiotId(p.gameName, p.tagLine);
+      return { puuid, gameName: p.gameName };
+    })
+  );
 
   const tick = async () => {
-    try {
-      await pollPlayer(client, channelId, puuid, gameName, state);
-      await saveState(STATE_FILE, state);
-    } catch (err) {
-      console.error('Erro no poll:', err);
+    for (const { puuid, gameName } of resolved) {
+      try {
+        const state = { lastMatchId: botState.byPuuid[puuid] ?? null };
+        await pollPlayer(client, channelId, puuid, gameName, state);
+        botState.byPuuid[puuid] = state.lastMatchId;
+      } catch (err) {
+        console.error(`Erro no poll de ${gameName}:`, err);
+      }
     }
+    await saveState(STATE_FILE, botState);
   };
 
   await tick();
