@@ -228,4 +228,18 @@ Nenhum arquivo acima de 100 linhas. Zero risco de refatoração obrigatória.
 - `docker-compose.yml`: serviço `redis:7-alpine` adicionado; `bot` recebe `REDIS_URL=redis://redis:6379` e `depends_on: redis`
 - `.env.example`: `REDIS_URL=redis://localhost:6379` adicionado
 - **Railway:** adicionar addon Redis → `REDIS_URL` injetado automaticamente
+
+### Persistência: `players.json` → Redis ✓
+
+- `src/players.ts` reescrito com `ioredis`: `loadPlayers(): Promise<Player[]>`, `savePlayers(players): Promise<void>`
+- Chave Redis: `'bot:players'`
+- Fallback gracioso: erros retornam `[]` e são logados, nunca relançados
+- **Seed automático na primeira boot:** se Redis estiver vazio, lê `players.json` do disco, persiste no Redis e loga `"players.json migrado para Redis"` — zero intervenção manual no redeploy
+- `src/index.ts`: função local `savePlayers` removida; import de `savePlayers` de `./players`; lógica de seed inline após `loadPlayers()`
 - **83 testes passando · 0 warnings · build limpo**
+
+### Chaves Redis em produção
+| Chave | Conteúdo |
+|-------|----------|
+| `bot:state` | `BotState` — `byPuuid` + `stats` |
+| `bot:players` | `Player[]` — lista de jogadores monitorados |
