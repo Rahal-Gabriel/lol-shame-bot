@@ -14,7 +14,7 @@ requireEnv('RIOT_API_KEY');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-client.once('ready', async () => {
+client.once('clientReady', async () => {
   console.log(`lol-shame-bot online — monitorando ${gameName}#${tagLine}`);
 
   const { puuid } = await getAccountByRiotId(gameName, tagLine);

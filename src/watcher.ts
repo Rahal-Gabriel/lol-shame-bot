@@ -2,6 +2,10 @@ import { Client } from 'discord.js';
 import { getLastRankedMatchId, getMatchResult } from './riot';
 import { isRankedDefeat, buildShameMessage, buildWinMessage } from './shame';
 import { sendMessage } from './discord';
+import { withRetry } from './retry';
+
+const RIOT_RETRIES = 3;
+const RIOT_RETRY_DELAY_MS = 2_000;
 
 export function hasNewMatch(lastMatchId: string | null, currentMatchId: string | null): boolean {
   return currentMatchId !== null && currentMatchId !== lastMatchId;
@@ -30,13 +34,21 @@ export async function pollPlayer(
   gameName: string,
   state: { lastMatchId: string | null }
 ): Promise<void> {
-  const currentMatchId = await getLastRankedMatchId(puuid);
+  const currentMatchId = await withRetry(
+    () => getLastRankedMatchId(puuid),
+    RIOT_RETRIES,
+    RIOT_RETRY_DELAY_MS
+  );
 
   if (!hasNewMatch(state.lastMatchId, currentMatchId)) return;
 
   state.lastMatchId = currentMatchId;
 
-  const match = await getMatchResult(currentMatchId as string, puuid);
+  const match = await withRetry(
+    () => getMatchResult(currentMatchId as string, puuid),
+    RIOT_RETRIES,
+    RIOT_RETRY_DELAY_MS
+  );
   const message = isRankedDefeat(match)
     ? buildShameMessage(gameName, match)
     : buildWinMessage(gameName, match);

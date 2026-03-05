@@ -5,9 +5,10 @@ import { MatchResult } from './shame';
 const ACCOUNT_BASE = 'https://americas.api.riotgames.com';
 const MATCH_BASE = 'https://americas.api.riotgames.com';
 const RANKED_SOLO_DUO = 420;
+const TIMEOUT_MS = 10_000;
 
-function headers() {
-  return { 'X-Riot-Token': requireEnv('RIOT_API_KEY') };
+function config() {
+  return { headers: { 'X-Riot-Token': requireEnv('RIOT_API_KEY') }, timeout: TIMEOUT_MS };
 }
 
 export async function getAccountByRiotId(
@@ -16,7 +17,7 @@ export async function getAccountByRiotId(
 ): Promise<{ puuid: string }> {
   const { data } = await axios.get(
     `${ACCOUNT_BASE}/riot/account/v1/accounts/by-riot-id/${gameName}/${tagLine}`,
-    { headers: headers() }
+    config()
   );
   return { puuid: data.puuid };
 }
@@ -24,7 +25,7 @@ export async function getAccountByRiotId(
 export async function getLastRankedMatchId(puuid: string): Promise<string | null> {
   const { data } = await axios.get(
     `${MATCH_BASE}/lol/match/v5/matches/by-puuid/${puuid}/ids`,
-    { headers: headers(), params: { queue: RANKED_SOLO_DUO, start: 0, count: 1 } }
+    { ...config(), params: { queue: RANKED_SOLO_DUO, start: 0, count: 1 } }
   );
   return data[0] ?? null;
 }
@@ -32,7 +33,7 @@ export async function getLastRankedMatchId(puuid: string): Promise<string | null
 export async function getMatchResult(matchId: string, puuid: string): Promise<MatchResult> {
   const { data } = await axios.get(
     `${MATCH_BASE}/lol/match/v5/matches/${matchId}`,
-    { headers: headers() }
+    config()
   );
 
   const participant = data.info.participants.find(
