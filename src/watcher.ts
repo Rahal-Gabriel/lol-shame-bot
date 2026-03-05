@@ -1,10 +1,8 @@
-import { Client } from 'discord.js';
+import { Queue } from 'bullmq';
 import { getLastRankedMatchId, getMatchResult } from './riot';
 import { isRankedDefeat, buildShameMessage } from './shame';
-import { sendMessage } from './discord';
-import { buildLossEmbed, buildWinEmbed } from './embed';
 import { withRetry } from './retry';
-import { PlayerStats, updateStats } from './stats';
+import { MatchJobData } from './queue';
 
 const RIOT_RETRIES = 3;
 const RIOT_RETRY_DELAY_MS = 2_000;
@@ -30,12 +28,11 @@ export async function checkPlayer(
 }
 
 export async function pollPlayer(
-  client: Client,
-  channelId: string,
+  queue: Queue<MatchJobData>,
   puuid: string,
   gameName: string,
-  state: { lastMatchId: string | null },
-  playerStats: { current: PlayerStats }
+  tagLine: string,
+  state: { lastMatchId: string | null }
 ): Promise<void> {
   const currentMatchId = await withRetry(
     () => getLastRankedMatchId(puuid),
@@ -47,17 +44,10 @@ export async function pollPlayer(
 
   state.lastMatchId = currentMatchId;
 
-  const match = await withRetry(
-    () => getMatchResult(currentMatchId as string, puuid),
-    RIOT_RETRIES,
-    RIOT_RETRY_DELAY_MS
-  );
-  const defeat = isRankedDefeat(match);
-  playerStats.current = updateStats(playerStats.current, !defeat);
-
-  const embed = defeat
-    ? buildLossEmbed(gameName, match)
-    : buildWinEmbed(gameName, match);
-
-  await sendMessage(client, channelId, embed);
+  await queue.add('process-match', {
+    puuid,
+    matchId: currentMatchId as string,
+    gameName,
+    tagLine,
+  });
 }

@@ -5,10 +5,12 @@ import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, ChatInput
 import { requireEnv } from './config';
 import { getAccountByRiotId } from './riot';
 import { pollPlayer } from './watcher';
-import { loadState, saveState } from './store';
+import { loadState } from './store';
 import { loadPlayers, savePlayers, Player } from './players';
 import { addPlayer, removePlayer, formatPlayerList } from './commands';
 import { emptyStats, formatStats } from './stats';
+import { createMatchQueue } from './queue';
+import { createWorker } from './matchWorker';
 import { log } from './logger';
 import { startHealthServer } from './health';
 
@@ -131,6 +133,9 @@ client.once('clientReady', async (c) => {
 
   const botState = await loadState();
 
+  const queue = createMatchQueue();
+  createWorker({ client, channelId, botState });
+
   const resolved = await Promise.all(
     players.map(async (p) => {
       const { puuid } = await getAccountByRiotId(p.gameName, p.tagLine);
@@ -146,17 +151,13 @@ client.once('clientReady', async (c) => {
   const tick = async () => {
     for (const { puuid, gameName, tagLine } of resolved) {
       try {
-        const key = `${gameName}#${tagLine}`;
         const state = { lastMatchId: botState.byPuuid[puuid] ?? null };
-        const playerStats = { current: botState.stats[key] ?? emptyStats() };
-        await pollPlayer(client, channelId, puuid, gameName, state, playerStats);
+        await pollPlayer(queue, puuid, gameName, tagLine, state);
         botState.byPuuid[puuid] = state.lastMatchId;
-        botState.stats[key] = playerStats.current;
       } catch (err) {
         log('error', `erro no poll de ${gameName}`, { error: String(err) });
       }
     }
-    await saveState(botState);
   };
 
   await tick();

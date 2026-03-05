@@ -8,6 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Estas regras não são opcionais. Valem para qualquer alteração neste repositório, independente do tamanho da tarefa.
 
+
 ### TDD — sem exceção
 - **Teste antes do código de produção.** Se Claude escrever código de produção antes do teste, o humano deve recusar e pedir o teste primeiro.
 - Ciclo obrigatório: escrever teste → ver falhar (RED) → implementar (GREEN) → CI verde → commit.
@@ -218,3 +219,12 @@ Nenhum arquivo acima de 100 linhas. Zero risco de refatoração obrigatória.
 |-------|----------|
 | `bot:state` | `BotState` — `byPuuid` + `stats` |
 | `bot:players` | `Player[]` — lista de jogadores monitorados |
+
+## Ciclo 3 — Dia 2: Integração BullMQ ✓
+
+- `src/queue.ts` — `createMatchQueue()`: fila BullMQ `match-results`, retry 3x exponencial (2s), dead-letter 100 falhas
+- `src/matchWorker.ts` — `processMatchJob(data, deps)`: consumer isolado (riot → stats → embed → sendMessage → saveState); `createWorker(deps)`: BullMQ Worker com log de falhas
+- `src/watcher.ts` — `pollPlayer` nova assinatura: `(queue, puuid, gameName, tagLine, state)` — só enfileira job (producer); remove lógica de processamento
+- `src/index.ts` — inicializa queue e worker no `clientReady`; tick loop simplificado
+- **BullMQ usa conexão Redis separada** (`maxRetriesPerRequest: null` internamente) — não reutiliza instância ioredis de `store.ts`
+- **89 testes passando · 0 warnings · build limpo**

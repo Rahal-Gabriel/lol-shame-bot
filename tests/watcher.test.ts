@@ -7,9 +7,8 @@ vi.mock('../src/riot');
 vi.mock('../src/discord');
 const mockedGetLastRankedMatchId = vi.mocked(riot.getLastRankedMatchId);
 const mockedGetMatchResult = vi.mocked(riot.getMatchResult);
-const mockedSendMessage = vi.mocked(discord.sendMessage);
 
-const mockClient = {} as never;
+const mockQueue = { add: vi.fn().mockResolvedValue({ id: 'job-1' }) } as never;
 
 beforeEach(() => vi.clearAllMocks());
 
@@ -70,40 +69,37 @@ describe('checkPlayer', () => {
 });
 
 describe('pollPlayer', () => {
-  it('sends shame message and updates lastMatchId on defeat', async () => {
+  it('adds job to queue with correct payload when new match detected', async () => {
     mockedGetLastRankedMatchId.mockResolvedValueOnce('BR1_200');
-    mockedGetMatchResult.mockResolvedValueOnce({ matchId: "BR1_200", won: false, queueId: 420, champion: "Yasuo", kills: 2, deaths: 8, assists: 1, gameDurationSecs: 1800 });
-    mockedSendMessage.mockResolvedValueOnce(undefined);
 
     const state = { lastMatchId: 'BR1_199' as string | null };
-    const ps = { current: { wins: 0, losses: 0, streak: 0 } };
-    await pollPlayer(mockClient, 'ch-1', 'puuid-abc', 'Gabriel', state, ps);
+    await pollPlayer(mockQueue, 'puuid-abc', 'Gabriel', 'BR1', state);
 
-    expect(mockedSendMessage).toHaveBeenCalledOnce();
+    expect(mockQueue.add).toHaveBeenCalledWith('process-match', {
+      puuid: 'puuid-abc',
+      matchId: 'BR1_200',
+      gameName: 'Gabriel',
+      tagLine: 'BR1',
+    });
     expect(state.lastMatchId).toBe('BR1_200');
   });
 
-  it('does not send message when there is no new match', async () => {
+  it('does not add job when match already seen', async () => {
     mockedGetLastRankedMatchId.mockResolvedValueOnce('BR1_199');
 
     const state = { lastMatchId: 'BR1_199' as string | null };
-    const ps = { current: { wins: 0, losses: 0, streak: 0 } };
-    await pollPlayer(mockClient, 'ch-1', 'puuid-abc', 'Gabriel', state, ps);
+    await pollPlayer(mockQueue, 'puuid-abc', 'Gabriel', 'BR1', state);
 
-    expect(mockedSendMessage).not.toHaveBeenCalled();
+    expect(mockQueue.add).not.toHaveBeenCalled();
     expect(state.lastMatchId).toBe('BR1_199');
   });
 
-  it('sends a win message when player won a ranked match', async () => {
-    mockedGetLastRankedMatchId.mockResolvedValueOnce('BR1_200');
-    mockedGetMatchResult.mockResolvedValueOnce({ matchId: "BR1_200", won: true, queueId: 420, champion: "Yasuo", kills: 10, deaths: 2, assists: 5, gameDurationSecs: 1800 });
-    mockedSendMessage.mockResolvedValueOnce(undefined);
+  it('does not add job when no match available (null)', async () => {
+    mockedGetLastRankedMatchId.mockResolvedValueOnce(null);
 
-    const state = { lastMatchId: 'BR1_199' as string | null };
-    const ps = { current: { wins: 0, losses: 0, streak: 0 } };
-    await pollPlayer(mockClient, 'ch-1', 'puuid-abc', 'Gabriel', state, ps);
+    const state = { lastMatchId: null as string | null };
+    await pollPlayer(mockQueue, 'puuid-abc', 'Gabriel', 'BR1', state);
 
-    expect(mockedSendMessage).toHaveBeenCalledOnce();
-    expect(state.lastMatchId).toBe('BR1_200');
+    expect(mockQueue.add).not.toHaveBeenCalled();
   });
 });
