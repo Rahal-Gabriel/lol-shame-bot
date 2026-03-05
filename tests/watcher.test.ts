@@ -1,10 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { hasNewMatch, checkPlayer } from '../src/watcher';
+import { hasNewMatch, checkPlayer, pollPlayer } from '../src/watcher';
 import * as riot from '../src/riot';
+import * as discord from '../src/discord';
 
 vi.mock('../src/riot');
+vi.mock('../src/discord');
 const mockedGetLastRankedMatchId = vi.mocked(riot.getLastRankedMatchId);
 const mockedGetMatchResult = vi.mocked(riot.getMatchResult);
+const mockedSendMessage = vi.mocked(discord.sendMessage);
+
+const mockClient = {} as never;
 
 beforeEach(() => vi.clearAllMocks());
 
@@ -62,5 +67,40 @@ describe('checkPlayer', () => {
     const result = await checkPlayer('puuid-abc', 'Gabriel', null);
 
     expect(result).toBeNull();
+  });
+});
+
+describe('pollPlayer', () => {
+  it('sends shame message and updates lastMatchId on defeat', async () => {
+    mockedGetLastRankedMatchId.mockResolvedValueOnce('BR1_200');
+    mockedGetMatchResult.mockResolvedValueOnce({ matchId: 'BR1_200', won: false, queueId: 420 });
+    mockedSendMessage.mockResolvedValueOnce(undefined);
+
+    const state = { lastMatchId: 'BR1_199' as string | null };
+    await pollPlayer(mockClient, 'ch-1', 'puuid-abc', 'Gabriel', state);
+
+    expect(mockedSendMessage).toHaveBeenCalledOnce();
+    expect(state.lastMatchId).toBe('BR1_200');
+  });
+
+  it('does not send message when there is no new match', async () => {
+    mockedGetLastRankedMatchId.mockResolvedValueOnce('BR1_199');
+
+    const state = { lastMatchId: 'BR1_199' as string | null };
+    await pollPlayer(mockClient, 'ch-1', 'puuid-abc', 'Gabriel', state);
+
+    expect(mockedSendMessage).not.toHaveBeenCalled();
+    expect(state.lastMatchId).toBe('BR1_199');
+  });
+
+  it('does not send message when player won', async () => {
+    mockedGetLastRankedMatchId.mockResolvedValueOnce('BR1_200');
+    mockedGetMatchResult.mockResolvedValueOnce({ matchId: 'BR1_200', won: true, queueId: 420 });
+
+    const state = { lastMatchId: 'BR1_199' as string | null };
+    await pollPlayer(mockClient, 'ch-1', 'puuid-abc', 'Gabriel', state);
+
+    expect(mockedSendMessage).not.toHaveBeenCalled();
+    expect(state.lastMatchId).toBe('BR1_200');
   });
 });
