@@ -37,6 +37,24 @@ export function buildShameMessage(gameName: string, match: MatchResult): string 
   return `🔴 ${gameName} perdeu uma ranked! (${match.matchId}) — ${phrase}`;
 }
 
+export const WIN_MESSAGES = [
+  'deve ter sido sorte',
+  'o adversário estava de olho fechado',
+  'até relógio parado acerta duas vezes por dia',
+  'comemorou né? amanhã perde de volta',
+  'vitória suspeita, vou investigar',
+  'os inimigos deixaram ganhar com pena',
+  'uma vitória não faz verão',
+  'tá bom, aproveita que não dura',
+  'foi fácil né? tenta na próxima quando o adversário tiver acordado',
+  'ganhou e nem sabe por quê',
+  'parabéns, agora volta pro seu elo',
+  'fluke clássico',
+  'nem acredito que você ganhou isso',
+  'os deuses tiveram pena hoje',
+];
+
 export function buildWinMessage(gameName: string, match: MatchResult): string {
-  return `😢 ${gameName} ganhou uma ranked (${match.matchId})... deve ter sido sorte.`;
+  const phrase = WIN_MESSAGES[Math.floor(Math.random() * WIN_MESSAGES.length)];
+  return `😒 ${gameName} ganhou uma ranked (${match.matchId})... ${phrase}`;
 }

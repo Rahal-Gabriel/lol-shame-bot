@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isRankedDefeat, buildShameMessage, buildWinMessage, SHAME_MESSAGES } from '../src/shame';
+import { isRankedDefeat, buildShameMessage, buildWinMessage, SHAME_MESSAGES, WIN_MESSAGES } from '../src/shame';
 
 describe('isRankedDefeat', () => {
   it('returns true when player lost a ranked solo game', () => {
@@ -47,8 +47,12 @@ describe('buildWinMessage', () => {
     expect(msg).toContain('BR1_999');
   });
 
-  it('returns a non-empty string', () => {
+  it('contains one of the win phrases', () => {
     const msg = buildWinMessage('Faker', { matchId: 'BR1_1', won: true, queueId: 420 });
-    expect(msg.length).toBeGreaterThan(0);
+    expect(WIN_MESSAGES.some((phrase: string) => msg.includes(phrase))).toBe(true);
+  });
+
+  it('has at least 5 win phrases', () => {
+    expect(WIN_MESSAGES.length).toBeGreaterThanOrEqual(5);
   });
 });
