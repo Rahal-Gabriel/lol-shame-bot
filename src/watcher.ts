@@ -1,7 +1,8 @@
 import { Client } from 'discord.js';
 import { getLastRankedMatchId, getMatchResult } from './riot';
-import { isRankedDefeat, buildShameMessage, buildWinMessage } from './shame';
+import { isRankedDefeat, buildShameMessage } from './shame';
 import { sendMessage } from './discord';
+import { buildLossEmbed, buildWinEmbed } from './embed';
 import { withRetry } from './retry';
 
 const RIOT_RETRIES = 3;
@@ -49,9 +50,9 @@ export async function pollPlayer(
     RIOT_RETRIES,
     RIOT_RETRY_DELAY_MS
   );
-  const message = isRankedDefeat(match)
-    ? buildShameMessage(gameName)
-    : buildWinMessage(gameName);
+  const embed = isRankedDefeat(match)
+    ? buildLossEmbed(gameName, match)
+    : buildWinEmbed(gameName, match);
 
-  await sendMessage(client, channelId, message);
+  await sendMessage(client, channelId, embed);
 }

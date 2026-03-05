@@ -43,5 +43,14 @@ export async function getMatchResult(matchId: string, puuid: string): Promise<Ma
     throw new Error(`Participant ${puuid} not found in match ${matchId}`);
   }
 
-  return { matchId, won: participant.win, queueId: data.info.queueId };
+  return {
+    matchId,
+    won: participant.win,
+    queueId: data.info.queueId,
+    champion: participant.championName,
+    kills: participant.kills,
+    deaths: participant.deaths,
+    assists: participant.assists,
+    gameDurationSecs: data.info.gameDuration,
+  };
 }

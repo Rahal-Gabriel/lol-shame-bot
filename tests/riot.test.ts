@@ -44,19 +44,23 @@ describe('getLastRankedMatchId', () => {
 });
 
 describe('getMatchResult', () => {
-  it('returns won=false and queueId for a lost ranked game', async () => {
+  it('returns full match result for a lost ranked game', async () => {
     mockedGet.mockResolvedValueOnce({
       data: {
         info: {
           queueId: 420,
-          participants: [{ puuid: 'abc-123', win: false }],
+          gameDuration: 1832,
+          participants: [{ puuid: 'abc-123', win: false, championName: 'Yasuo', kills: 2, deaths: 8, assists: 1 }],
         },
       },
     } as never);
 
     const result = await getMatchResult('BR1_123456', 'abc-123');
 
-    expect(result).toEqual({ matchId: 'BR1_123456', won: false, queueId: 420 });
+    expect(result).toEqual({
+      matchId: 'BR1_123456', won: false, queueId: 420,
+      champion: 'Yasuo', kills: 2, deaths: 8, assists: 1, gameDurationSecs: 1832,
+    });
   });
 
   it('throws when the player is not found in the match', async () => {

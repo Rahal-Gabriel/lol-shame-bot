@@ -2,6 +2,11 @@ export interface MatchResult {
   matchId: string;
   won: boolean;
   queueId: number;
+  champion: string;
+  kills: number;
+  deaths: number;
+  assists: number;
+  gameDurationSecs: number;
 }
 
 const RANKED_SOLO_DUO = 420;

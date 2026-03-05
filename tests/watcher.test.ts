@@ -34,7 +34,7 @@ describe('hasNewMatch', () => {
 describe('checkPlayer', () => {
   it('returns a shame message when player has a new ranked defeat', async () => {
     mockedGetLastRankedMatchId.mockResolvedValueOnce('BR1_200');
-    mockedGetMatchResult.mockResolvedValueOnce({ matchId: 'BR1_200', won: false, queueId: 420 });
+    mockedGetMatchResult.mockResolvedValueOnce({ matchId: "BR1_200", won: false, queueId: 420, champion: "Yasuo", kills: 2, deaths: 8, assists: 1, gameDurationSecs: 1800 });
 
     const result = await checkPlayer('puuid-abc', 'Gabriel', 'BR1_199');
 
@@ -53,7 +53,7 @@ describe('checkPlayer', () => {
 
   it('returns null when player won the new match', async () => {
     mockedGetLastRankedMatchId.mockResolvedValueOnce('BR1_200');
-    mockedGetMatchResult.mockResolvedValueOnce({ matchId: 'BR1_200', won: true, queueId: 420 });
+    mockedGetMatchResult.mockResolvedValueOnce({ matchId: "BR1_200", won: true, queueId: 420, champion: "Yasuo", kills: 10, deaths: 2, assists: 5, gameDurationSecs: 1800 });
 
     const result = await checkPlayer('puuid-abc', 'Gabriel', 'BR1_199');
 
@@ -72,7 +72,7 @@ describe('checkPlayer', () => {
 describe('pollPlayer', () => {
   it('sends shame message and updates lastMatchId on defeat', async () => {
     mockedGetLastRankedMatchId.mockResolvedValueOnce('BR1_200');
-    mockedGetMatchResult.mockResolvedValueOnce({ matchId: 'BR1_200', won: false, queueId: 420 });
+    mockedGetMatchResult.mockResolvedValueOnce({ matchId: "BR1_200", won: false, queueId: 420, champion: "Yasuo", kills: 2, deaths: 8, assists: 1, gameDurationSecs: 1800 });
     mockedSendMessage.mockResolvedValueOnce(undefined);
 
     const state = { lastMatchId: 'BR1_199' as string | null };
@@ -94,7 +94,7 @@ describe('pollPlayer', () => {
 
   it('sends a win message when player won a ranked match', async () => {
     mockedGetLastRankedMatchId.mockResolvedValueOnce('BR1_200');
-    mockedGetMatchResult.mockResolvedValueOnce({ matchId: 'BR1_200', won: true, queueId: 420 });
+    mockedGetMatchResult.mockResolvedValueOnce({ matchId: "BR1_200", won: true, queueId: 420, champion: "Yasuo", kills: 10, deaths: 2, assists: 5, gameDurationSecs: 1800 });
     mockedSendMessage.mockResolvedValueOnce(undefined);
 
     const state = { lastMatchId: 'BR1_199' as string | null };

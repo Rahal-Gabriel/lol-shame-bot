@@ -12,7 +12,7 @@ describe('sendMessage', () => {
     await sendMessage(mockClient, 'channel-123', 'você é uma vergonha');
 
     expect(mockFetch).toHaveBeenCalledWith('channel-123');
-    expect(mockSend).toHaveBeenCalledWith('você é uma vergonha');
+    expect(mockSend).toHaveBeenCalledWith({ content: 'você é uma vergonha' });
   });
 
   it('throws when channel is not found', async () => {
