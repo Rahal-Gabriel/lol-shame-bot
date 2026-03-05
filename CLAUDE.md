@@ -116,3 +116,26 @@ Copy `.env.example` to `.env`:
 - `isRankedDefeat(match: MatchResult)` → `boolean` (queue 420 + `won === false`)
 
 **`tests/`** — vitest com axios mockado via `vi.mock('axios')` + `vi.mocked(axios.get)`.
+
+**`src/watcher.ts`** — orquestração do loop de polling:
+- `hasNewMatch(lastId, currentId)` → `boolean`
+- `checkPlayer(puuid, gameName, lastMatchId)` → `string | null` (retorna a mensagem de shame ou null)
+
+## Checkpoint Dia 4 — Revisão de Saúde (2026-03-05)
+
+### Cobertura de testes
+| Arquivo       | Stmts | Branch | Funcs | Lines |
+|---------------|-------|--------|-------|-------|
+| config.ts     | 100%  | 100%   | 100%  | 100%  |
+| riot.ts       | 100%  | 100%   | 100%  | 100%  |
+| shame.ts      | 100%  | 100%   | 100%  | 100%  |
+| watcher.ts    | 100%  | 100%   | 100%  | 100%  |
+| index.ts      | 0%    | 0%     | 0%    | 0%    |
+| **Total**     | **91%** | **95%** | **90%** | **91%** |
+
+`index.ts` com 0% é esperado — é o entry point que depende de env vars e Discord; será coberto no Dia 5.
+
+### Tamanho dos arquivos (limite: 300 linhas)
+Nenhum arquivo acima de 100 linhas. Zero risco de refatoração obrigatória.
+
+### Total de testes: 21 — todos passando.
