@@ -8,7 +8,11 @@ import { loadState, saveState } from './store';
 import { loadPlayers, Player } from './players';
 import { addPlayer, removePlayer, formatPlayerList } from './commands';
 import { emptyStats, formatStats } from './stats';
+import { log } from './logger';
+import { startHealthServer } from './health';
 import { writeFile } from 'fs/promises';
+
+const HEALTH_PORT = parseInt(process.env.PORT ?? '3000', 10);
 
 const token = requireEnv('DISCORD_TOKEN');
 const channelId = requireEnv('DISCORD_CHANNEL_ID');
@@ -100,12 +104,24 @@ async function handleInteraction(
   return players;
 }
 
+client.on('warn', (msg) => log('warn', msg));
+client.on('error', (err) => log('error', err.message));
+client.on('shardReconnecting', () => log('warn', 'reconectando ao Discord...'));
+client.on('shardResume', () => {
+  log('info', 'reconectado ao Discord');
+  client.channels.fetch(channelId)
+    .then(ch => { if (ch) (ch as import('discord.js').TextChannel).send('✅ bot voltou online.'); })
+    .catch(() => undefined);
+});
+
 client.once('clientReady', async (c) => {
+  startHealthServer(HEALTH_PORT);
+
   const rest = new REST().setToken(token);
   await rest.put(Routes.applicationCommands(c.user.id), { body: slashCommands });
 
   let players = await loadPlayers(PLAYERS_FILE);
-  console.log(`lol-shame-bot online — monitorando ${players.length} jogador(es)`);
+  log('info', 'bot online', { players: players.length });
 
   const botState = await loadState(STATE_FILE);
 
@@ -131,7 +147,7 @@ client.once('clientReady', async (c) => {
         botState.byPuuid[puuid] = state.lastMatchId;
         botState.stats[key] = playerStats.current;
       } catch (err) {
-        console.error(`Erro no poll de ${gameName}:`, err);
+        log('error', `erro no poll de ${gameName}`, { error: String(err) });
       }
     }
     await saveState(STATE_FILE, botState);
