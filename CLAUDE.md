@@ -220,6 +220,13 @@ Nenhum arquivo acima de 100 linhas. Zero risco de refatoração obrigatória.
 | `bot:state` | `BotState` — `byPuuid` + `stats` |
 | `bot:players` | `Player[]` — lista de jogadores monitorados |
 
+## Ciclo 3 — Dia 3: Comando `/check-now` ✓
+
+- `src/commands.ts` — `resolveCheckNow(gameName, tagLine, resolved)` → player ou `null`
+- `src/watcher.ts` — `pollPlayer` agora retorna `Promise<boolean>` (true se job enfileirado)
+- `src/index.ts` — `/check-now` registrado; handler com `deferReply` + `followUp`
+- **91 testes passando · 0 warnings · build limpo**
+
 ## Ciclo 3 — Dia 2: Integração BullMQ ✓
 
 - `src/queue.ts` — `createMatchQueue()`: fila BullMQ `match-results`, retry 3x exponencial (2s), dead-letter 100 falhas

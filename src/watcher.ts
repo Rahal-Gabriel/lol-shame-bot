@@ -33,14 +33,14 @@ export async function pollPlayer(
   gameName: string,
   tagLine: string,
   state: { lastMatchId: string | null }
-): Promise<void> {
+): Promise<boolean> {
   const currentMatchId = await withRetry(
     () => getLastRankedMatchId(puuid),
     RIOT_RETRIES,
     RIOT_RETRY_DELAY_MS
   );
 
-  if (!hasNewMatch(state.lastMatchId, currentMatchId)) return;
+  if (!hasNewMatch(state.lastMatchId, currentMatchId)) return false;
 
   state.lastMatchId = currentMatchId;
 
@@ -50,4 +50,6 @@ export async function pollPlayer(
     gameName,
     tagLine,
   });
+
+  return true;
 }

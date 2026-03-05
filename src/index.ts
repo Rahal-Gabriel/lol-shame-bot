@@ -7,7 +7,7 @@ import { getAccountByRiotId } from './riot';
 import { pollPlayer } from './watcher';
 import { loadState } from './store';
 import { loadPlayers, savePlayers, Player } from './players';
-import { addPlayer, removePlayer, formatPlayerList } from './commands';
+import { addPlayer, removePlayer, formatPlayerList, resolveCheckNow } from './commands';
 import { emptyStats, formatStats } from './stats';
 import { createMatchQueue } from './queue';
 import { createWorker } from './matchWorker';
@@ -39,6 +39,10 @@ const slashCommands = [
   new SlashCommandBuilder()
     .setName('stats')
     .setDescription('Mostra estatísticas de um jogador')
+    .addStringOption(o => o.setName('nome').setDescription('Nome#Tag (ex: GatoMakonha#T2F)').setRequired(true)),
+  new SlashCommandBuilder()
+    .setName('check-now')
+    .setDescription('Verifica imediatamente a última partida de um jogador')
     .addStringOption(o => o.setName('nome').setDescription('Nome#Tag (ex: GatoMakonha#T2F)').setRequired(true)),
 ].map(c => c.toJSON());
 
@@ -145,6 +149,31 @@ client.once('clientReady', async (c) => {
 
   client.on('interactionCreate', async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
+
+    if (interaction.commandName === 'check-now') {
+      await interaction.deferReply({ ephemeral: true });
+      const input = interaction.options.getString('nome', true);
+      const parsed = parseNomeTag(input);
+      if (!parsed) {
+        await interaction.followUp({ content: 'Formato inválido. Use Nome#Tag (ex: GatoMakonha#T2F)', ephemeral: true });
+        return;
+      }
+      const player = resolveCheckNow(parsed.gameName, parsed.tagLine, resolved);
+      if (!player) {
+        await interaction.followUp({ content: `Jogador ${input} não está sendo monitorado.`, ephemeral: true });
+        return;
+      }
+      const state = { lastMatchId: botState.byPuuid[player.puuid] ?? null };
+      const jobAdded = await pollPlayer(queue, player.puuid, player.gameName, player.tagLine, state);
+      botState.byPuuid[player.puuid] = state.lastMatchId;
+      if (jobAdded) {
+        await interaction.followUp({ content: `Verificando última partida de ${player.gameName}... resultado em breve!`, ephemeral: true });
+      } else {
+        await interaction.followUp({ content: `Nenhuma partida nova para ${input}.`, ephemeral: true });
+      }
+      return;
+    }
+
     players = await handleInteraction(interaction, players, botState.stats);
   });
 

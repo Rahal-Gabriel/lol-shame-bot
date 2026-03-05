@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { addPlayer, removePlayer, formatPlayerList } from '../src/commands';
+import { addPlayer, removePlayer, formatPlayerList, resolveCheckNow } from '../src/commands';
 import { Player } from '../src/players';
 
 const base: Player[] = [
@@ -54,5 +54,22 @@ describe('formatPlayerList', () => {
   it('returns a message when list is empty', () => {
     const result = formatPlayerList([]);
     expect(result.length).toBeGreaterThan(0);
+  });
+});
+
+describe('resolveCheckNow', () => {
+  const resolved = [
+    { puuid: 'abc123', gameName: 'GatoMakonha', tagLine: 'T2F' },
+    { puuid: 'def456', gameName: 'Faker', tagLine: 'KR1' },
+  ];
+
+  it('returns the player when found by gameName and tagLine', () => {
+    const result = resolveCheckNow('GatoMakonha', 'T2F', resolved);
+    expect(result).toEqual({ puuid: 'abc123', gameName: 'GatoMakonha', tagLine: 'T2F' });
+  });
+
+  it('returns null when the player is not in the list', () => {
+    const result = resolveCheckNow('Ninguem', 'BR1', resolved);
+    expect(result).toBeNull();
   });
 });

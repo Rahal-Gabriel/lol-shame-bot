@@ -16,3 +16,11 @@ export function formatPlayerList(players: Player[]): string {
   if (players.length === 0) return 'Nenhum jogador monitorado no momento.';
   return players.map(p => `• ${p.gameName}#${p.tagLine}`).join('\n');
 }
+
+export function resolveCheckNow(
+  gameName: string,
+  tagLine: string,
+  resolved: Array<{ puuid: string; gameName: string; tagLine: string }>
+): { puuid: string; gameName: string; tagLine: string } | null {
+  return resolved.find(p => p.gameName === gameName && p.tagLine === tagLine) ?? null;
+}
