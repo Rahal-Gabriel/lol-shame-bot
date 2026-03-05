@@ -13,3 +13,7 @@ export function isRankedDefeat(match: MatchResult): boolean {
 export function buildShameMessage(gameName: string, match: MatchResult): string {
   return `🔴 ${gameName} perdeu uma ranked! (${match.matchId}) — que vergonha!`;
 }
+
+export function buildWinMessage(gameName: string, match: MatchResult): string {
+  return `😢 ${gameName} ganhou uma ranked (${match.matchId})... deve ter sido sorte.`;
+}

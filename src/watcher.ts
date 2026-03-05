@@ -1,6 +1,6 @@
 import { Client } from 'discord.js';
 import { getLastRankedMatchId, getMatchResult } from './riot';
-import { isRankedDefeat, buildShameMessage } from './shame';
+import { isRankedDefeat, buildShameMessage, buildWinMessage } from './shame';
 import { sendMessage } from './discord';
 
 export function hasNewMatch(lastMatchId: string | null, currentMatchId: string | null): boolean {
@@ -37,7 +37,9 @@ export async function pollPlayer(
   state.lastMatchId = currentMatchId;
 
   const match = await getMatchResult(currentMatchId as string, puuid);
-  if (!isRankedDefeat(match)) return;
+  const message = isRankedDefeat(match)
+    ? buildShameMessage(gameName, match)
+    : buildWinMessage(gameName, match);
 
-  await sendMessage(client, channelId, buildShameMessage(gameName, match));
+  await sendMessage(client, channelId, message);
 }

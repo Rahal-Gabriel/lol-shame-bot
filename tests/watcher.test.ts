@@ -93,14 +93,15 @@ describe('pollPlayer', () => {
     expect(state.lastMatchId).toBe('BR1_199');
   });
 
-  it('does not send message when player won', async () => {
+  it('sends a win message when player won a ranked match', async () => {
     mockedGetLastRankedMatchId.mockResolvedValueOnce('BR1_200');
     mockedGetMatchResult.mockResolvedValueOnce({ matchId: 'BR1_200', won: true, queueId: 420 });
+    mockedSendMessage.mockResolvedValueOnce(undefined);
 
     const state = { lastMatchId: 'BR1_199' as string | null };
     await pollPlayer(mockClient, 'ch-1', 'puuid-abc', 'Gabriel', state);
 
-    expect(mockedSendMessage).not.toHaveBeenCalled();
+    expect(mockedSendMessage).toHaveBeenCalledOnce();
     expect(state.lastMatchId).toBe('BR1_200');
   });
 });

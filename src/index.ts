@@ -20,13 +20,16 @@ client.once('ready', async () => {
   const { puuid } = await getAccountByRiotId(gameName, tagLine);
   const state: { lastMatchId: string | null } = { lastMatchId: null };
 
-  setInterval(async () => {
+  const tick = async () => {
     try {
       await pollPlayer(client, channelId, puuid, gameName, state);
     } catch (err) {
       console.error('Erro no poll:', err);
     }
-  }, intervalMs);
+  };
+
+  await tick();
+  setInterval(tick, intervalMs);
 });
 
 client.login(token);
