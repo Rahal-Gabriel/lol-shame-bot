@@ -4,66 +4,41 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 # lol-shame-bot — CLAUDE.md
 
-## Desafio 7 Dias: Do Zero à Produção com IA + XP
+## Guardrails permanentes
 
-### Regras que valem para os 7 dias inteiros
-- CI roda em CADA commit — não é opcional
-- Teste antes do código — sempre, sem exceção
-- Se a IA escrever código de produção antes do teste, recuse
-- Cada commit é production-ready
-- Se um arquivo passar de 300 linhas, refatore antes de continuar
-- Documente cada aprendizado aqui no CLAUDE.md no momento que acontece
-- O humano decide o QUÊ — a IA decide o COMO
+Estas regras não são opcionais. Valem para qualquer alteração neste repositório, independente do tamanho da tarefa.
+
+### TDD — sem exceção
+- **Teste antes do código de produção.** Se Claude escrever código de produção antes do teste, o humano deve recusar e pedir o teste primeiro.
+- Ciclo obrigatório: escrever teste → ver falhar (RED) → implementar (GREEN) → CI verde → commit.
+- Nunca commitar código sem testes cobrindo o comportamento novo.
+
+### Cada commit é production-ready
+- CI roda em cada commit: `lint → test → build`. Nenhum commit quebra o CI.
+- Commits atômicos: um commit = uma mudança coesa. Não misturar feat + fix + refactor.
+- Zero warnings de lint e TypeScript em cada commit.
+
+### Limites de tamanho
+- Nenhum arquivo ultrapassa 300 linhas. Se ultrapassar, refatorar antes de continuar.
+- Funções com mais de uma responsabilidade são divididas.
+
+### Documentação contínua
+- Cada decisão de arquitetura relevante é documentada aqui no CLAUDE.md no momento em que acontece — não depois.
+- Novos módulos entram na tabela de arquitetura abaixo.
+
+### Divisão de responsabilidades
+- **O humano decide o QUÊ.** Claude decide o COMO.
+- Claude não inicia refactorings, renomeações ou "melhorias" não solicitadas.
+- Mudanças destrutivas (delete de arquivo, alteração de interface pública) exigem confirmação explícita.
+
+### Checklist antes de propor código
+1. Li os arquivos relevantes antes de sugerir mudanças?
+2. Há um teste cobrindo o comportamento novo?
+3. O CI vai passar depois dessa mudança?
+4. Algum arquivo vai ultrapassar 300 linhas?
+5. O CLAUDE.md precisa ser atualizado?
 
 ---
-
-### Dia 1 — IA Jail: Governança e CI
-**Objetivo:** Nenhuma feature. Apenas a fundação.
-- Repositório criado
-- Ambiente isolado (container ou .nvmrc fixando versão do Node)
-- CI configurado: ESLint + testes (mesmo vazios) rodando em cada push
-- CLAUDE.md criado
-- **Critério de saída:** CI verde no commit #1
-
-### Dia 2 — Arquitetura e Primeira Feature com TDD
-**Objetivo:** Definir a arquitetura e implementar o core com teste-primeiro.
-- Serviços principais definidos e documentados aqui
-- Primeira feature implementada: teste → código → CI verde
-- **Critério de saída:** CLAUDE.md com arquitetura, 1 feature com TDD
-
-### Dia 3 — Features com TDD Contínuo
-**Objetivo:** Empilhar features mantendo a disciplina.
-- Cada commit: teste → código → CI verde
-- Sem código duplicado, sem arquivo acima de 300 linhas
-- **Critério de saída:** Checklist de cada commit respeitado
-
-### Dia 4 — Features + Revisão de Saúde
-**Objetivo:** Continuar features e fazer checkpoint do projeto.
-- Relatório de cobertura de testes revisado
-- Arquivos maiores identificados e divididos se necessário
-- CLAUDE.md atualizado com o estado real
-- **Critério de saída:** Checklist de saúde do projeto feito
-
-### Dia 5 — Interface de Saída (Bot Discord)
-**Objetivo:** Conectar o core ao Discord.
-- Comandos do bot implementados com testes de integração
-- Validação de input na borda
-- Tratamento explícito de erros
-- **Critério de saída:** Bot respondendo no servidor de teste
-
-### Dia 6 — Hardening: Segurança e Refactoring
-**Objetivo:** Transformar o que funciona no que sobrevive a usuários reais.
-- Zero warnings de linter e segurança
-- Jobs de polling com retry e timeout
-- Refactoring final — sem dívida técnica acumulada
-- **Critério de saída:** Zero warnings, cobertura revisada
-
-### Dia 7 — Deploy em Produção
-**Objetivo:** Sistema acessível por um usuário real.
-- Suite completa de testes passando
-- Deploy executado
-- Smoke test em produção feito
-- **Critério de saída:** Bot rodando em produção, primeiro uso real documentado
 
 ## Overview
 
