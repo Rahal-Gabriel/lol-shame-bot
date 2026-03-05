@@ -163,3 +163,69 @@ Nenhum arquivo acima de 100 linhas. Zero risco de refatoração obrigatória.
 - Mensagem de shame na derrota ranked
 - Mensagem de tristeza na vitória ranked
 - **Critério de saída:** Bot respondendo no servidor de teste ✓
+
+---
+
+## Ciclo 2 — Evolução em 7 Dias
+
+### Ciclo 2 — Dia 1: Persistência de Estado ✓
+
+- `src/store.ts` — `loadState` / `saveState` persistem `BotState` em `state.json`
+- `state.json` é gitignored (gerado em runtime); `players.json` é commitado
+- **BotState:**
+  ```ts
+  { byPuuid: Record<string, string | null>, stats: Record<string, PlayerStats> }
+  ```
+- 47 testes, 0 warnings
+
+### Ciclo 2 — Dia 2: Multi-player ✓
+
+- `src/players.ts` — `loadPlayers(filePath)` carrega e valida `players.json`
+- `players.json` copiado para imagem Docker: `COPY --from=builder /app/players.json ./players.json`
+- Formato: `[{ "gameName": "GatoMakonha", "tagLine": "T2F" }]`
+- **Bug corrigido:** `ENOENT players.json` no Railway — arquivo estava no `.gitignore`
+
+### Ciclo 2 — Dia 3: Slash Commands ✓
+
+- `src/commands.ts` — `addPlayer`, `removePlayer`, `formatPlayerList` (lógica pura)
+- Slash commands registrados: `/add-player`, `/remove-player`, `/list-players`, `/stats`
+- Parâmetro `nome:Nome#Tag` em todos os comandos que precisam de um jogador
+
+### Ciclo 2 — Dia 4: Rich Embeds ✓
+
+- `src/embed.ts` — `buildLossEmbed` (vermelho `#ff0000`), `buildWinEmbed` (cinza `#808080`)
+- Embeds mostram: champion, KDA, duração (`formatDuration` → `"30m32s"`)
+- `src/discord.ts` — `sendMessage` aceita `string | EmbedBuilder`
+
+### Ciclo 2 — Dia 5: Rate Limiting ✓
+
+- `src/rateLimit.ts` — `RateLimiter(minIntervalMs)`: fila com 50ms entre chamadas Riot API
+- Timeout de 10s em todas as requisições axios
+
+### Ciclo 2 — Dia 6: Estatísticas ✓
+
+- `src/stats.ts` — `emptyStats`, `updateStats`, `formatStats`
+- `PlayerStats`: `{ wins, losses, streak }` — streak positivo = vitórias, negativo = derrotas
+- `/stats` exibe: `"📊 Nome — 3V 7D (30% WR) | 💀 3 derrota(s)"`
+- Conta partidas a partir do início do monitoramento (sem backfill histórico — comportamento confirmado pelo usuário)
+
+### Ciclo 2 — Dia 7: Observabilidade ✓
+
+- `src/logger.ts` — logs JSON estruturados (`timestamp`, `level`, `message`, meta) → stdout/stderr
+- `src/health.ts` — `GET /health` → `{ status: "ok", uptime: <número> }` na porta `PORT` (padrão 3000)
+- Alerta no canal Discord quando bot reconecta (`shardResume`)
+- **83 testes passando · 0 warnings · build limpo**
+
+## Ciclo 3 — Migração para Redis
+
+### Persistência: `state.json` → Redis ✓
+
+- `src/store.ts` reescrito com `ioredis`: `loadState(): Promise<BotState>`, `saveState(state): Promise<void>`
+- Cliente Redis criado no nível do módulo via `REDIS_URL` (padrão `redis://localhost:6379`)
+- Chave Redis: `'bot:state'`
+- Fallback gracioso em ambas as funções — erros são logados, nunca relançados
+- `src/index.ts`: `STATE_FILE` removido; call sites atualizados para as novas assinaturas sem `filePath`
+- `docker-compose.yml`: serviço `redis:7-alpine` adicionado; `bot` recebe `REDIS_URL=redis://redis:6379` e `depends_on: redis`
+- `.env.example`: `REDIS_URL=redis://localhost:6379` adicionado
+- **Railway:** adicionar addon Redis → `REDIS_URL` injetado automaticamente
+- **83 testes passando · 0 warnings · build limpo**

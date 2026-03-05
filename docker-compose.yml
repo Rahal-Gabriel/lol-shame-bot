@@ -1,9 +1,19 @@
 services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
   bot:
     build: .
     env_file:
       - .env
+    environment:
+      - REDIS_URL=redis://redis:6379
     volumes:
       - .:/app
       - /app/node_modules
     restart: unless-stopped
+    depends_on:
+      - redis

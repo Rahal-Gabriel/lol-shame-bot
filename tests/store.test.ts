@@ -1,44 +1,62 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { join } from 'path';
-import { rm } from 'fs/promises';
-import { loadState, saveState } from '../src/store';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { BotState } from '../src/store';
 
-const TEST_FILE = join('/tmp', 'lol-shame-bot-test-state.json');
+const mockGet = vi.fn();
+const mockSet = vi.fn();
 
-beforeEach(() => rm(TEST_FILE, { force: true }));
-afterEach(() => rm(TEST_FILE, { force: true }));
+vi.mock('ioredis', () => {
+  const MockRedis = vi.fn().mockImplementation(() => ({ get: mockGet, set: mockSet }));
+  return { default: MockRedis };
+});
+
+beforeEach(() => {
+  vi.resetModules();
+  mockGet.mockReset();
+  mockSet.mockReset();
+});
+
+async function getStore() {
+  const mod = await import('../src/store');
+  return mod;
+}
 
 describe('loadState', () => {
-  it('returns empty byPuuid when file does not exist', async () => {
-    const state = await loadState(TEST_FILE);
-    expect(state.byPuuid).toEqual({});
+  it('returns empty state when Redis returns null', async () => {
+    mockGet.mockResolvedValue(null);
+    const { loadState } = await getStore();
+    const state = await loadState();
+    expect(state).toEqual({ byPuuid: {}, stats: {} });
   });
 
-  it('returns saved state when file exists', async () => {
-    await saveState(TEST_FILE, { byPuuid: { 'puuid-1': 'BR1_999' } });
-    const state = await loadState(TEST_FILE);
+  it('returns parsed state when Redis has data', async () => {
+    const stored: BotState = { byPuuid: { 'puuid-1': 'BR1_999' }, stats: {} };
+    mockGet.mockResolvedValue(JSON.stringify(stored));
+    const { loadState } = await getStore();
+    const state = await loadState();
     expect(state.byPuuid['puuid-1']).toBe('BR1_999');
+  });
+
+  it('returns empty state gracefully when Redis throws', async () => {
+    mockGet.mockRejectedValue(new Error('connection refused'));
+    const { loadState } = await getStore();
+    const state = await loadState();
+    expect(state).toEqual({ byPuuid: {}, stats: {} });
   });
 });
 
 describe('saveState', () => {
-  it('persists byPuuid to disk', async () => {
-    await saveState(TEST_FILE, { byPuuid: { 'puuid-1': 'BR1_123' } });
-    const state = await loadState(TEST_FILE);
-    expect(state.byPuuid['puuid-1']).toBe('BR1_123');
+  it('calls redis.set with serialized state', async () => {
+    mockSet.mockResolvedValue('OK');
+    const { saveState } = await getStore();
+    const state: BotState = { byPuuid: { 'puuid-1': 'BR1_123' }, stats: {} };
+    await saveState(state);
+    expect(mockSet).toHaveBeenCalledWith('bot:state', JSON.stringify(state));
   });
 
-  it('persists multiple players', async () => {
-    await saveState(TEST_FILE, { byPuuid: { 'puuid-1': 'BR1_100', 'puuid-2': 'BR1_200' } });
-    const state = await loadState(TEST_FILE);
-    expect(state.byPuuid['puuid-1']).toBe('BR1_100');
-    expect(state.byPuuid['puuid-2']).toBe('BR1_200');
-  });
-
-  it('overwrites previous state', async () => {
-    await saveState(TEST_FILE, { byPuuid: { 'puuid-1': 'BR1_100' } });
-    await saveState(TEST_FILE, { byPuuid: { 'puuid-1': 'BR1_200' } });
-    const state = await loadState(TEST_FILE);
-    expect(state.byPuuid['puuid-1']).toBe('BR1_200');
+  it('does not throw when Redis fails', async () => {
+    mockSet.mockRejectedValue(new Error('write error'));
+    const { saveState } = await getStore();
+    const state: BotState = { byPuuid: {}, stats: {} };
+    await expect(saveState(state)).resolves.toBeUndefined();
   });
 });

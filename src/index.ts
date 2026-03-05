@@ -20,7 +20,6 @@ const intervalMs = parseInt(process.env.POLL_INTERVAL_MS ?? '60000', 10);
 
 requireEnv('RIOT_API_KEY');
 
-const STATE_FILE = join(process.cwd(), 'state.json');
 const PLAYERS_FILE = join(process.cwd(), 'players.json');
 
 const slashCommands = [
@@ -123,7 +122,7 @@ client.once('clientReady', async (c) => {
   let players = await loadPlayers(PLAYERS_FILE);
   log('info', 'bot online', { players: players.length });
 
-  const botState = await loadState(STATE_FILE);
+  const botState = await loadState();
 
   const resolved = await Promise.all(
     players.map(async (p) => {
@@ -150,7 +149,7 @@ client.once('clientReady', async (c) => {
         log('error', `erro no poll de ${gameName}`, { error: String(err) });
       }
     }
-    await saveState(STATE_FILE, botState);
+    await saveState(botState);
   };
 
   await tick();
