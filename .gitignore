@@ -3,5 +3,4 @@ dist/
 .env
 .svelte-kit/
 state.json
-players.json
 coverage/
