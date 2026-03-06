@@ -53,6 +53,21 @@ describe('buildLossEmbed', () => {
     const field = embed.data.fields?.find(f => f.value === '30m32s');
     expect(field).toBeDefined();
   });
+
+  it('includes Fila field with value "Solo/Duo" for queueId 420', () => {
+    const embed = buildLossEmbed('Gabriel', lossMatch);
+    const field = embed.data.fields?.find(f => f.name === 'Fila');
+    expect(field).toBeDefined();
+    expect(field?.value).toBe('Solo/Duo');
+  });
+
+  it('includes Fila field with value "Flex" for queueId 440', () => {
+    const flexMatch: MatchResult = { ...lossMatch, queueId: 440 };
+    const embed = buildLossEmbed('Gabriel', flexMatch);
+    const field = embed.data.fields?.find(f => f.name === 'Fila');
+    expect(field).toBeDefined();
+    expect(field?.value).toBe('Flex');
+  });
 });
 
 describe('buildWinEmbed', () => {
@@ -70,6 +85,21 @@ describe('buildWinEmbed', () => {
     const embed = buildWinEmbed('Gabriel', winMatch);
     const field = embed.data.fields?.find(f => f.value === '10/2/1');
     expect(field).toBeDefined();
+  });
+
+  it('includes Fila field with value "Solo/Duo" for queueId 420', () => {
+    const embed = buildWinEmbed('Gabriel', winMatch);
+    const field = embed.data.fields?.find(f => f.name === 'Fila');
+    expect(field).toBeDefined();
+    expect(field?.value).toBe('Solo/Duo');
+  });
+
+  it('includes Fila field with value "Flex" for queueId 440', () => {
+    const flexWinMatch: MatchResult = { ...winMatch, queueId: 440 };
+    const embed = buildWinEmbed('Gabriel', flexWinMatch);
+    const field = embed.data.fields?.find(f => f.name === 'Fila');
+    expect(field).toBeDefined();
+    expect(field?.value).toBe('Flex');
   });
 });
 
@@ -134,5 +164,16 @@ describe('buildHistoryEmbed', () => {
   it('field value includes duration formatted as "30m32s"', () => {
     const embed = buildHistoryEmbed('GatoMakonha', 'T2F', [historyWinMatch, historyLossMatch]);
     expect(embed.data.fields?.[1].value).toContain('30m32s');
+  });
+
+  it('win field value includes "Solo/Duo" label for queueId 420', () => {
+    const embed = buildHistoryEmbed('GatoMakonha', 'T2F', [historyWinMatch, historyLossMatch]);
+    expect(embed.data.fields?.[0].value).toContain('Solo/Duo');
+  });
+
+  it('win field value includes "Flex" label for queueId 440', () => {
+    const flexWinMatch: MatchResult = { ...historyWinMatch, queueId: 440 };
+    const embed = buildHistoryEmbed('GatoMakonha', 'T2F', [flexWinMatch]);
+    expect(embed.data.fields?.[0].value).toContain('Flex');
   });
 });

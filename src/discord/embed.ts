@@ -1,6 +1,5 @@
 import { EmbedBuilder } from 'discord.js';
-import { MatchResult } from '../watcher/shame';
-import { buildShameMessage, buildWinMessage } from '../watcher/shame';
+import { MatchResult, buildShameMessage, buildWinMessage, queueLabel } from '../watcher/shame';
 
 export function formatDuration(secs: number): string {
   const m = Math.floor(secs / 60);
@@ -16,6 +15,7 @@ export function buildLossEmbed(gameName: string, match: MatchResult): EmbedBuild
       { name: 'Campeão', value: match.champion, inline: true },
       { name: 'KDA', value: `${match.kills}/${match.deaths}/${match.assists}`, inline: true },
       { name: 'Duração', value: formatDuration(match.gameDurationSecs), inline: true },
+      { name: 'Fila', value: queueLabel(match.queueId), inline: true },
     );
 }
 
@@ -27,6 +27,7 @@ export function buildWinEmbed(gameName: string, match: MatchResult): EmbedBuilde
       { name: 'Campeão', value: match.champion, inline: true },
       { name: 'KDA', value: `${match.kills}/${match.deaths}/${match.assists}`, inline: true },
       { name: 'Duração', value: formatDuration(match.gameDurationSecs), inline: true },
+      { name: 'Fila', value: queueLabel(match.queueId), inline: true },
     );
 }
 
@@ -37,7 +38,7 @@ export function buildHistoryEmbed(gameName: string, tagLine: string, matches: Ma
     const duration = formatDuration(match.gameDurationSecs);
     return {
       name: `${index + 1}. ${match.champion}`,
-      value: `${outcome}  |  ${kda}  |  ${duration}`,
+      value: `${outcome}  |  ${queueLabel(match.queueId)}  |  ${kda}  |  ${duration}`,
       inline: false,
     };
   });
