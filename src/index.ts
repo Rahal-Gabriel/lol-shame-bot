@@ -174,7 +174,7 @@ client.once('clientReady', async (c) => {
     if (!interaction.isChatInputCommand()) return;
 
     if (interaction.commandName === 'history') {
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply();
       const input = interaction.options.getString('nome', true);
       const parsed = parseNomeTag(input);
       if (!parsed) {
