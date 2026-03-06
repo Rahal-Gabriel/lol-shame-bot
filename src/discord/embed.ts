@@ -29,3 +29,21 @@ export function buildWinEmbed(gameName: string, match: MatchResult): EmbedBuilde
       { name: 'Duração', value: formatDuration(match.gameDurationSecs), inline: true },
     );
 }
+
+export function buildHistoryEmbed(gameName: string, tagLine: string, matches: MatchResult[]): EmbedBuilder {
+  const fields = matches.map((match, index) => {
+    const outcome = match.won ? '🟢 Win' : '🔴 Loss';
+    const kda = `${match.kills}/${match.deaths}/${match.assists}`;
+    const duration = formatDuration(match.gameDurationSecs);
+    return {
+      name: `${index + 1}. ${match.champion}`,
+      value: `${outcome}  |  ${kda}  |  ${duration}`,
+      inline: false,
+    };
+  });
+
+  return new EmbedBuilder()
+    .setColor(0x0099ff)
+    .setTitle(`Últimas ${matches.length} ranked de ${gameName}#${tagLine}`)
+    .addFields(...fields);
+}
