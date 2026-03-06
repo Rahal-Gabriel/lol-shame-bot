@@ -1,12 +1,10 @@
 import { Worker } from 'bullmq';
-import { Client } from 'discord.js';
 import { getMatchResult } from '../riot/client';
 import { isRankedDefeat } from '../watcher/shame';
-import { buildLossEmbed, buildWinEmbed } from '../discord/embed';
-import { sendMessage } from '../discord/client';
 import { withRetry } from '../infra/retry';
 import { emptyStats, updateStats } from '../players/stats';
-import { saveState, BotState } from '../infra/store';
+import { BotState } from '../infra/store';
+import { TypedEventEmitter } from '../infra/eventBus';
 import { log } from '../logger';
 import { MatchJobData, QUEUE_NAME } from './queue';
 
@@ -14,14 +12,13 @@ const RIOT_RETRIES = 3;
 const RIOT_RETRY_DELAY_MS = 2_000;
 
 export interface ProcessMatchDeps {
-  client: Client;
-  channelId: string;
   botState: BotState;
+  eventBus: TypedEventEmitter;
 }
 
 export async function processMatchJob(data: MatchJobData, deps: ProcessMatchDeps): Promise<void> {
   const { puuid, matchId, gameName, tagLine } = data;
-  const { client, channelId, botState } = deps;
+  const { botState, eventBus } = deps;
 
   const match = await withRetry(
     () => getMatchResult(matchId, puuid),
@@ -29,16 +26,17 @@ export async function processMatchJob(data: MatchJobData, deps: ProcessMatchDeps
     RIOT_RETRY_DELAY_MS
   );
 
-  const defeat = isRankedDefeat(match);
+  const isDefeat = isRankedDefeat(match);
   const key = `${gameName}#${tagLine}`;
-  botState.stats[key] = updateStats(botState.stats[key] ?? emptyStats(), !defeat);
+  const statsAfter = updateStats(botState.stats[key] ?? emptyStats(), !isDefeat);
 
-  const embed = defeat
-    ? buildLossEmbed(gameName, match)
-    : buildWinEmbed(gameName, match);
-
-  await sendMessage(client, channelId, embed);
-  await saveState(botState);
+  eventBus.emit('match:finished', {
+    gameName,
+    tagLine,
+    match,
+    isDefeat,
+    statsAfter,
+  });
 }
 
 export function createWorker(deps: ProcessMatchDeps): Worker<MatchJobData> {

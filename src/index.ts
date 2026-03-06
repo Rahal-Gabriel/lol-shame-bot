@@ -5,12 +5,18 @@ import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, ChatInput
 import { requireEnv } from './config';
 import { getAccountByRiotId } from './riot/client';
 import { pollPlayer } from './watcher/watcher';
-import { loadState } from './infra/store';
+import { loadState, saveState } from './infra/store';
 import { loadPlayers, savePlayers, Player } from './players/players';
 import { addPlayer, removePlayer, formatPlayerList, resolveCheckNow } from './discord/commands';
 import { emptyStats, formatStats } from './players/stats';
 import { createMatchQueue } from './queue/queue';
 import { createWorker } from './queue/matchWorker';
+import { eventBus } from './infra/eventBus';
+import { statsHandler } from './handlers/statsHandler';
+import { discordHandler } from './handlers/discordHandler';
+import { streakHandler } from './handlers/streakHandler';
+import { buildLossEmbed, buildWinEmbed } from './discord/embed';
+import { sendMessage } from './discord/client';
 import { log } from './logger';
 import { startHealthServer } from './infra/health';
 
@@ -138,7 +144,20 @@ client.once('clientReady', async (c) => {
   const botState = await loadState();
 
   const queue = createMatchQueue();
-  createWorker({ client, channelId, botState });
+
+  eventBus.on('match:finished', async (event) => {
+    await statsHandler(event, { botState, saveState });
+  });
+
+  eventBus.on('match:finished', async (event) => {
+    await discordHandler(event, { client, channelId, sendMessage, buildLossEmbed, buildWinEmbed });
+  });
+
+  eventBus.on('match:finished', async (event) => {
+    await streakHandler(event, { client, channelId, sendMessage });
+  });
+
+  createWorker({ botState, eventBus });
 
   const resolved = await Promise.all(
     players.map(async (p) => {
