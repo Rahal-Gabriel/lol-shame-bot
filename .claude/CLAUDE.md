@@ -97,11 +97,11 @@ docker compose up --build   # sobe redis + bot
 |---------|-----------------|
 | `src/index.ts` | Entry point — Discord client, polling loop, slash commands, registro de handlers |
 | `src/config.ts` | `requireEnv(key)` — leitura de env vars obrigatórias |
-| `src/riot/client.ts` | Cliente Riot API: `getAccountByRiotId`, `getLastRankedMatchId`, `getMatchResult` |
+| `src/riot/client.ts` | Cliente Riot API: `getAccountByRiotId`, `getLastRankedMatchId`, `getLastNRankedMatchIds`, `getMatchResult` |
 | `src/riot/rateLimit.ts` | `RateLimiter(minIntervalMs)` — fila com intervalo mínimo entre chamadas Riot API |
 | `src/watcher/watcher.ts` | `pollPlayer(queue, puuid, gameName, tagLine, state)` — producer de jobs |
 | `src/watcher/shame.ts` | `isRankedDefeat`, `buildShameMessage`, `buildWinMessage`, `buildTiltMessage`, `SHAME_MESSAGES`, `WIN_MESSAGES`, `TILT_MESSAGES` |
-| `src/discord/embed.ts` | `buildLossEmbed` (vermelho #ff0000) / `buildWinEmbed` (cinza #808080) |
+| `src/discord/embed.ts` | `buildLossEmbed` (vermelho #ff0000) / `buildWinEmbed` (cinza #808080) / `buildHistoryEmbed` (azul #0099ff) |
 | `src/discord/client.ts` | `sendMessage(client, channelId, message: string \| EmbedBuilder)` |
 | `src/discord/commands.ts` | Lógica pura dos slash commands (addPlayer, removePlayer, formatPlayerList, resolveCheckNow) |
 | `src/players/players.ts` | `loadPlayers()` / `savePlayers(players)` — Redis key `bot:players` |
@@ -137,10 +137,11 @@ docker compose up --build   # sobe redis + bot
 | `/list-players` | `formatPlayerList` em `commands.ts` |
 | `/stats nome:Nome#Tag` | `formatStats` em `stats.ts` |
 | `/check-now nome:Nome#Tag` | `resolveCheckNow` em `commands.ts` + `pollPlayer` em `watcher.ts` |
+| `/history nome:Nome#Tag` | `getLastNRankedMatchIds` + `getMatchResult` + `buildHistoryEmbed` em `index.ts` |
 
 ## Estado atual do projeto
 
-- **135 testes passando · 0 warnings · build limpo**
+- **146 testes passando · 0 warnings · build limpo**
 - Cobertura: config/riot/shame/watcher/commands/stats/embed/eventBus/handlers = 100% | index.ts = 0% (entry point, esperado)
 - Bot em produção no Railway monitorando jogadores reais
-- Ciclo 4 concluído: EventBus interno — `processMatchJob` delega via `match:finished`; handlers em `src/handlers/` isolados e testáveis
+- Ciclo 5 concluído: `/history` slash command — `getLastNRankedMatchIds` em riot/client.ts, `buildHistoryEmbed` em discord/embed.ts, handler em index.ts
