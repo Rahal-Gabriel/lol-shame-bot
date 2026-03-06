@@ -3,7 +3,7 @@ import { join } from 'path';
 import { readFile } from 'fs/promises';
 import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { requireEnv } from './config';
-import { getAccountByRiotId } from './riot/client';
+import { getAccountByRiotId, getLastNRankedMatchIds, getMatchResult } from './riot/client';
 import { pollPlayer } from './watcher/watcher';
 import { loadState, saveState } from './infra/store';
 import { loadPlayers, savePlayers, Player } from './players/players';
@@ -15,7 +15,7 @@ import { eventBus } from './infra/eventBus';
 import { statsHandler } from './handlers/statsHandler';
 import { discordHandler } from './handlers/discordHandler';
 import { streakHandler } from './handlers/streakHandler';
-import { buildLossEmbed, buildWinEmbed } from './discord/embed';
+import { buildLossEmbed, buildWinEmbed, buildHistoryEmbed } from './discord/embed';
 import { sendMessage } from './discord/client';
 import { log } from './logger';
 import { startHealthServer } from './infra/health';
@@ -49,6 +49,10 @@ const slashCommands = [
   new SlashCommandBuilder()
     .setName('check-now')
     .setDescription('Verifica imediatamente a última partida de um jogador')
+    .addStringOption(o => o.setName('nome').setDescription('Nome#Tag (ex: GatoMakonha#T2F)').setRequired(true)),
+  new SlashCommandBuilder()
+    .setName('history')
+    .setDescription('Mostra as últimas 5 ranked de qualquer jogador')
     .addStringOption(o => o.setName('nome').setDescription('Nome#Tag (ex: GatoMakonha#T2F)').setRequired(true)),
 ].map(c => c.toJSON());
 
@@ -168,6 +172,30 @@ client.once('clientReady', async (c) => {
 
   client.on('interactionCreate', async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
+
+    if (interaction.commandName === 'history') {
+      await interaction.deferReply({ ephemeral: true });
+      const input = interaction.options.getString('nome', true);
+      const parsed = parseNomeTag(input);
+      if (!parsed) {
+        await interaction.editReply('Formato inválido. Use Nome#Tag');
+        return;
+      }
+      try {
+        const { puuid } = await getAccountByRiotId(parsed.gameName, parsed.tagLine);
+        const matchIds = await getLastNRankedMatchIds(puuid, 5);
+        if (matchIds.length === 0) {
+          await interaction.editReply(`${input} não tem partidas ranked registradas.`);
+          return;
+        }
+        const matches = await Promise.all(matchIds.map(id => getMatchResult(id, puuid)));
+        const embed = buildHistoryEmbed(parsed.gameName, parsed.tagLine, matches);
+        await interaction.editReply({ embeds: [embed] });
+      } catch {
+        await interaction.editReply('Erro ao buscar histórico. Tente novamente.');
+      }
+      return;
+    }
 
     if (interaction.commandName === 'check-now') {
       await interaction.deferReply({ ephemeral: true });
