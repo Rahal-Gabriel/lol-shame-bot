@@ -168,4 +168,92 @@ describe('processMatchJob', () => {
     // via the event bus, not by calling saveState itself.
     expect('saveState' in deps).toBe(false);
   });
+
+  // --- BothQueues feature: ranked match guard ---
+
+  it('Flex defeat (queueId 440) emits match:finished with isDefeat: true', async () => {
+    const flexDefeatMatch = {
+      matchId: 'BR1_300',
+      won: false,
+      queueId: 440,
+      champion: 'Yasuo',
+      kills: 1,
+      deaths: 9,
+      assists: 0,
+      gameDurationSecs: 1500,
+    };
+    mockedGetMatchResult.mockResolvedValueOnce(flexDefeatMatch);
+    const eventBus = makeEventBus();
+    const botState = makeBotState();
+
+    await processMatchJob(baseData, { botState, eventBus });
+
+    expect(eventBus.emit).toHaveBeenCalledWith('match:finished', expect.objectContaining({
+      isDefeat: true,
+      match: flexDefeatMatch,
+    }));
+  });
+
+  it('Flex victory (queueId 440) emits match:finished with isDefeat: false', async () => {
+    const flexVictoryMatch = {
+      matchId: 'BR1_300',
+      won: true,
+      queueId: 440,
+      champion: 'Lux',
+      kills: 8,
+      deaths: 2,
+      assists: 10,
+      gameDurationSecs: 1500,
+    };
+    mockedGetMatchResult.mockResolvedValueOnce(flexVictoryMatch);
+    const eventBus = makeEventBus();
+    const botState = makeBotState();
+
+    await processMatchJob(baseData, { botState, eventBus });
+
+    expect(eventBus.emit).toHaveBeenCalledWith('match:finished', expect.objectContaining({
+      isDefeat: false,
+      match: flexVictoryMatch,
+    }));
+  });
+
+  it('ARAM (queueId 450) does NOT emit match:finished event', async () => {
+    const aramMatch = {
+      matchId: 'BR1_400',
+      won: false,
+      queueId: 450,
+      champion: 'Teemo',
+      kills: 3,
+      deaths: 7,
+      assists: 2,
+      gameDurationSecs: 1200,
+    };
+    mockedGetMatchResult.mockResolvedValueOnce(aramMatch);
+    const eventBus = makeEventBus();
+    const botState = makeBotState();
+
+    await processMatchJob(baseData, { botState, eventBus });
+
+    expect(eventBus.emit).not.toHaveBeenCalled();
+  });
+
+  it('unknown queue (queueId 999) does NOT emit match:finished event', async () => {
+    const unknownQueueMatch = {
+      matchId: 'BR1_500',
+      won: true,
+      queueId: 999,
+      champion: 'Brand',
+      kills: 5,
+      deaths: 3,
+      assists: 4,
+      gameDurationSecs: 1800,
+    };
+    mockedGetMatchResult.mockResolvedValueOnce(unknownQueueMatch);
+    const eventBus = makeEventBus();
+    const botState = makeBotState();
+
+    await processMatchJob(baseData, { botState, eventBus });
+
+    expect(eventBus.emit).not.toHaveBeenCalled();
+  });
 });

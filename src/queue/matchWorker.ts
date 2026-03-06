@@ -1,6 +1,6 @@
 import { Worker } from 'bullmq';
 import { getMatchResult } from '../riot/client';
-import { isRankedDefeat } from '../watcher/shame';
+import { isRankedMatch } from '../watcher/shame';
 import { withRetry } from '../infra/retry';
 import { emptyStats, updateStats } from '../players/stats';
 import { BotState } from '../infra/store';
@@ -26,7 +26,9 @@ export async function processMatchJob(data: MatchJobData, deps: ProcessMatchDeps
     RIOT_RETRY_DELAY_MS
   );
 
-  const isDefeat = isRankedDefeat(match);
+  if (!isRankedMatch(match)) return;
+
+  const isDefeat = !match.won;
   const key = `${gameName}#${tagLine}`;
   const statsAfter = updateStats(botState.stats[key] ?? emptyStats(), !isDefeat);
 
