@@ -34,6 +34,14 @@ export async function getLastRankedMatchId(puuid: string): Promise<string | null
   return data[0] ?? null;
 }
 
+export async function getLastNRankedMatchIds(puuid: string, count: number): Promise<string[]> {
+  const { data } = await limiter.throttle(() => axios.get(
+    `${MATCH_BASE}/lol/match/v5/matches/by-puuid/${puuid}/ids`,
+    { ...config(), params: { queue: RANKED_SOLO_DUO, start: 0, count } }
+  ));
+  return data;
+}
+
 export async function getMatchResult(matchId: string, puuid: string): Promise<MatchResult> {
   const { data } = await limiter.throttle(() => axios.get(
     `${MATCH_BASE}/lol/match/v5/matches/${matchId}`,

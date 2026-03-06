@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import axios from 'axios';
-import { getAccountByRiotId, getLastRankedMatchId, getMatchResult } from '../../src/riot/client';
+import { getAccountByRiotId, getLastRankedMatchId, getMatchResult, getLastNRankedMatchIds } from '../../src/riot/client';
 
 vi.mock('axios');
 const mockedGet = vi.mocked(axios.get);
@@ -71,5 +71,43 @@ describe('getMatchResult', () => {
     await expect(getMatchResult('BR1_123456', 'unknown')).rejects.toThrow(
       'Participant unknown not found in match BR1_123456'
     );
+  });
+});
+
+describe('getLastNRankedMatchIds', () => {
+  it('returns array of N ids when enough matches exist', async () => {
+    const ids = ['BR1_1', 'BR1_2', 'BR1_3', 'BR1_4', 'BR1_5'];
+    mockedGet.mockResolvedValueOnce({ data: ids } as never);
+
+    const result = await getLastNRankedMatchIds('abc-123', 5);
+
+    expect(result).toEqual(ids);
+    expect(mockedGet).toHaveBeenCalledWith(
+      'https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/abc-123/ids',
+      expect.objectContaining({ params: { queue: 420, start: 0, count: 5 } })
+    );
+  });
+
+  it('returns smaller array when fewer matches exist than count requested', async () => {
+    const ids = ['BR1_1', 'BR1_2'];
+    mockedGet.mockResolvedValueOnce({ data: ids } as never);
+
+    const result = await getLastNRankedMatchIds('abc-123', 5);
+
+    expect(result).toEqual(['BR1_1', 'BR1_2']);
+    expect(result).toHaveLength(2);
+    expect(mockedGet).toHaveBeenCalledWith(
+      'https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/abc-123/ids',
+      expect.objectContaining({ params: { queue: 420, start: 0, count: 5 } })
+    );
+  });
+
+  it('returns empty array when player has no ranked matches', async () => {
+    mockedGet.mockResolvedValueOnce({ data: [] } as never);
+
+    const result = await getLastNRankedMatchIds('abc-123', 5);
+
+    expect(result).toEqual([]);
+    expect(result).toHaveLength(0);
   });
 });
