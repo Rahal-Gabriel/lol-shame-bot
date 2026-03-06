@@ -64,3 +64,21 @@ export function buildWinMessage(gameName: string): string {
   const phrase = WIN_MESSAGES[Math.floor(Math.random() * WIN_MESSAGES.length)];
   return `😒 ${gameName} ganhou uma ranked... ${phrase}`;
 }
+
+export const TILT_MESSAGES: string[] = [
+  'acabou. desliga o pc antes de piorar. vai lavar a louça.',
+  'você entrou no modo automático de derrota. seu cerebro já foi embora.',
+  'isso não é tilt, isso é um estilo de vida. vergonhoso.',
+  'sugiro uma pausa de 6 meses antes de chegar ao ferro.',
+  'o inimigo tá indo dormir feliz por sua causa. toda noite.',
+  'você tá carregando o time inimigo nas costas sem cobrar frete.',
+  'a MMR tá caindo mais rápido que sua dignidade.',
+  'estatisticamente impossível ser tão consistentemente ruim.',
+  'nem o suporte te salva dessa situação. ninguém pode.',
+  'já pensou em tentar um jogo que não exige habilidade?',
+];
+
+export function buildTiltMessage(gameName: string, streak: number): string {
+  const phrase = TILT_MESSAGES[Math.floor(Math.random() * TILT_MESSAGES.length)];
+  return `🤡 ${gameName} está em tilt! ${Math.abs(streak)} derrotas seguidas 💀 — ${phrase}`;
+}
