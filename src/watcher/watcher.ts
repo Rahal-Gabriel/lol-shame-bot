@@ -1,5 +1,5 @@
 import { Queue } from 'bullmq';
-import { getLastRankedMatchId, getMatchResult } from '../riot/client';
+import { getLastRankedMatchId, getLastRankedMatchIdBothQueues, getMatchResult } from '../riot/client';
 import { isRankedDefeat, buildShameMessage } from './shame';
 import { withRetry } from '../infra/retry';
 import { MatchJobData } from '../queue/queue';
@@ -35,7 +35,7 @@ export async function pollPlayer(
   state: { lastMatchId: string | null }
 ): Promise<boolean> {
   const currentMatchId = await withRetry(
-    () => getLastRankedMatchId(puuid),
+    () => getLastRankedMatchIdBothQueues(puuid),
     RIOT_RETRIES,
     RIOT_RETRY_DELAY_MS
   );

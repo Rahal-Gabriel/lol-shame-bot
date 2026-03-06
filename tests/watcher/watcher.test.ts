@@ -1,14 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Queue } from 'bullmq';
 import { hasNewMatch, checkPlayer, pollPlayer } from '../../src/watcher/watcher';
 import * as riot from '../../src/riot/client';
-import * as discord from '../../src/discord/client';
+import type { MatchJobData } from '../../src/queue/queue';
 
 vi.mock('../../src/riot/client');
 vi.mock('../../src/discord/client');
 const mockedGetLastRankedMatchId = vi.mocked(riot.getLastRankedMatchId);
+const mockedGetLastRankedMatchIdBothQueues = vi.mocked(riot.getLastRankedMatchIdBothQueues);
 const mockedGetMatchResult = vi.mocked(riot.getMatchResult);
 
-const mockQueue = { add: vi.fn().mockResolvedValue({ id: 'job-1' }) } as never;
+const mockQueue = { add: vi.fn().mockResolvedValue({ id: 'job-1' }) } as unknown as Queue<MatchJobData>;
 
 beforeEach(() => vi.clearAllMocks());
 
@@ -70,7 +72,7 @@ describe('checkPlayer', () => {
 
 describe('pollPlayer', () => {
   it('adds job to queue with correct payload when new match detected', async () => {
-    mockedGetLastRankedMatchId.mockResolvedValueOnce('BR1_200');
+    mockedGetLastRankedMatchIdBothQueues.mockResolvedValueOnce('BR1_200');
 
     const state = { lastMatchId: 'BR1_199' as string | null };
     await pollPlayer(mockQueue, 'puuid-abc', 'Gabriel', 'BR1', state);
@@ -85,7 +87,7 @@ describe('pollPlayer', () => {
   });
 
   it('does not add job when match already seen', async () => {
-    mockedGetLastRankedMatchId.mockResolvedValueOnce('BR1_199');
+    mockedGetLastRankedMatchIdBothQueues.mockResolvedValueOnce('BR1_199');
 
     const state = { lastMatchId: 'BR1_199' as string | null };
     await pollPlayer(mockQueue, 'puuid-abc', 'Gabriel', 'BR1', state);
@@ -95,11 +97,26 @@ describe('pollPlayer', () => {
   });
 
   it('does not add job when no match available (null)', async () => {
-    mockedGetLastRankedMatchId.mockResolvedValueOnce(null);
+    mockedGetLastRankedMatchIdBothQueues.mockResolvedValueOnce(null);
 
     const state = { lastMatchId: null as string | null };
     await pollPlayer(mockQueue, 'puuid-abc', 'Gabriel', 'BR1', state);
 
     expect(mockQueue.add).not.toHaveBeenCalled();
+  });
+
+  it('detects Flex match (queueId 440) and adds job to queue', async () => {
+    mockedGetLastRankedMatchIdBothQueues.mockResolvedValueOnce('BR1_300');
+
+    const state = { lastMatchId: 'BR1_299' as string | null };
+    await pollPlayer(mockQueue, 'puuid-abc', 'Gabriel', 'BR1', state);
+
+    expect(mockQueue.add).toHaveBeenCalledWith('process-match', {
+      puuid: 'puuid-abc',
+      matchId: 'BR1_300',
+      gameName: 'Gabriel',
+      tagLine: 'BR1',
+    });
+    expect(state.lastMatchId).toBe('BR1_300');
   });
 });
