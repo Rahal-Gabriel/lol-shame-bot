@@ -3,7 +3,7 @@ import { join } from 'path';
 import { readFile } from 'fs/promises';
 import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { requireEnv } from './config';
-import { getAccountByRiotId, getLastNRankedMatchIds, getMatchResult } from './riot/client';
+import { getAccountByRiotId, getLastNRankedMatchIdsBothQueues, getMatchResult } from './riot/client';
 import { pollPlayer } from './watcher/watcher';
 import { loadState, saveState } from './infra/store';
 import { loadPlayers, savePlayers, Player } from './players/players';
@@ -183,7 +183,7 @@ client.once('clientReady', async (c) => {
       }
       try {
         const { puuid } = await getAccountByRiotId(parsed.gameName, parsed.tagLine);
-        const matchIds = await getLastNRankedMatchIds(puuid, 5);
+        const matchIds = await getLastNRankedMatchIdsBothQueues(puuid, 5);
         if (matchIds.length === 0) {
           await interaction.editReply(`${input} não tem partidas ranked registradas.`);
           return;
