@@ -9,7 +9,9 @@ export interface MatchResult {
   gameDurationSecs: number;
 }
 
-const RANKED_SOLO_DUO = 420;
+export const RANKED_SOLO_DUO = 420;
+export const RANKED_FLEX = 440;
+export const RANKED_QUEUES = [RANKED_SOLO_DUO, RANKED_FLEX] as const;
 
 export const SHAME_MESSAGES = [
   'KKKKKKKKKKKKKKKKKKKKKKKKK',
@@ -33,8 +35,18 @@ export const SHAME_MESSAGES = [
   'Zé roela games ataca novamente',
 ];
 
+export function isRankedMatch(match: MatchResult): boolean {
+  return RANKED_QUEUES.includes(match.queueId as (typeof RANKED_QUEUES)[number]);
+}
+
 export function isRankedDefeat(match: MatchResult): boolean {
-  return match.queueId === RANKED_SOLO_DUO && !match.won;
+  return isRankedMatch(match) && !match.won;
+}
+
+export function queueLabel(queueId: number): string {
+  if (queueId === RANKED_SOLO_DUO) return 'Solo/Duo';
+  if (queueId === RANKED_FLEX) return 'Flex';
+  return 'Ranked';
 }
 
 export function buildShameMessage(gameName: string): string {

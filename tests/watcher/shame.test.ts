@@ -1,5 +1,18 @@
 import { describe, it, expect } from 'vitest';
-import { isRankedDefeat, buildShameMessage, buildWinMessage, SHAME_MESSAGES, WIN_MESSAGES, TILT_MESSAGES, buildTiltMessage } from '../../src/watcher/shame';
+import {
+  isRankedDefeat,
+  buildShameMessage,
+  buildWinMessage,
+  SHAME_MESSAGES,
+  WIN_MESSAGES,
+  TILT_MESSAGES,
+  buildTiltMessage,
+  isRankedMatch,
+  queueLabel,
+  RANKED_FLEX,
+  RANKED_QUEUES,
+  RANKED_SOLO_DUO,
+} from '../../src/watcher/shame';
 
 const base = { matchId: 'BR1_1', champion: 'Yasuo', kills: 2, deaths: 8, assists: 1, gameDurationSecs: 1800 };
 
@@ -14,6 +27,63 @@ describe('isRankedDefeat', () => {
 
   it('returns false for non-ranked games even if lost', () => {
     expect(isRankedDefeat({ ...base, won: false, queueId: 400 })).toBe(false);
+  });
+
+  it('returns false for Flex win (not a defeat)', () => {
+    expect(isRankedDefeat({ ...base, won: true, queueId: 440 })).toBe(false);
+  });
+
+  it('returns true for Flex defeat (ranked defeat)', () => {
+    expect(isRankedDefeat({ ...base, won: false, queueId: 440 })).toBe(true);
+  });
+});
+
+describe('isRankedMatch', () => {
+  it('returns true for Solo/Duo loss (queueId 420, won false)', () => {
+    expect(isRankedMatch({ ...base, won: false, queueId: 420 })).toBe(true);
+  });
+
+  it('returns true for Solo/Duo win (queueId 420, won true)', () => {
+    expect(isRankedMatch({ ...base, won: true, queueId: 420 })).toBe(true);
+  });
+
+  it('returns true for Flex defeat (queueId 440, won false)', () => {
+    expect(isRankedMatch({ ...base, won: false, queueId: 440 })).toBe(true);
+  });
+
+  it('returns false for ARAM (queueId 450)', () => {
+    expect(isRankedMatch({ ...base, won: false, queueId: 450 })).toBe(false);
+  });
+});
+
+describe('queueLabel', () => {
+  it("returns 'Solo/Duo' for queueId 420", () => {
+    expect(queueLabel(420)).toBe('Solo/Duo');
+  });
+
+  it("returns 'Flex' for queueId 440", () => {
+    expect(queueLabel(440)).toBe('Flex');
+  });
+
+  it("returns 'Ranked' for unknown queueId (ex: 450)", () => {
+    expect(queueLabel(450)).toBe('Ranked');
+  });
+});
+
+describe('RANKED_FLEX e RANKED_QUEUES', () => {
+  it('RANKED_FLEX is equal to 440', () => {
+    expect(RANKED_FLEX).toBe(440);
+  });
+
+  it('RANKED_QUEUES contains both 420 and 440', () => {
+    expect(RANKED_QUEUES).toContain(420);
+    expect(RANKED_QUEUES).toContain(440);
+  });
+});
+
+describe('RANKED_SOLO_DUO export', () => {
+  it('RANKED_SOLO_DUO is equal to 420', () => {
+    expect(RANKED_SOLO_DUO).toBe(420);
   });
 });
 
