@@ -1,11 +1,10 @@
 import axios from 'axios';
 import { requireEnv } from '../config';
-import { MatchResult } from '../watcher/shame';
+import { MatchResult, RANKED_SOLO_DUO, RANKED_FLEX } from '../watcher/shame';
 import { RateLimiter } from './rateLimit';
 
 const ACCOUNT_BASE = 'https://americas.api.riotgames.com';
 const MATCH_BASE = 'https://americas.api.riotgames.com';
-const RANKED_SOLO_DUO = 420;
 const TIMEOUT_MS = 10_000;
 
 // Riot API: 20 req/s → mínimo 50ms entre requisições
@@ -26,20 +25,53 @@ export async function getAccountByRiotId(
   return { puuid: data.puuid };
 }
 
-export async function getLastRankedMatchId(puuid: string): Promise<string | null> {
+export async function getLastRankedMatchId(
+  puuid: string,
+  queue: number = RANKED_SOLO_DUO
+): Promise<string | null> {
   const { data } = await limiter.throttle(() => axios.get(
     `${MATCH_BASE}/lol/match/v5/matches/by-puuid/${puuid}/ids`,
-    { ...config(), params: { queue: RANKED_SOLO_DUO, start: 0, count: 1 } }
+    { ...config(), params: { queue, start: 0, count: 1 } }
   ));
   return data[0] ?? null;
 }
 
-export async function getLastNRankedMatchIds(puuid: string, count: number): Promise<string[]> {
+export async function getLastNRankedMatchIds(
+  puuid: string,
+  count: number,
+  queue: number = RANKED_SOLO_DUO
+): Promise<string[]> {
   const { data } = await limiter.throttle(() => axios.get(
     `${MATCH_BASE}/lol/match/v5/matches/by-puuid/${puuid}/ids`,
-    { ...config(), params: { queue: RANKED_SOLO_DUO, start: 0, count } }
+    { ...config(), params: { queue, start: 0, count } }
   ));
   return data;
+}
+
+export async function getLastRankedMatchIdBothQueues(puuid: string): Promise<string | null> {
+  const [solo, flex] = await Promise.all([
+    getLastRankedMatchId(puuid, RANKED_SOLO_DUO),
+    getLastRankedMatchId(puuid, RANKED_FLEX),
+  ]);
+  if (!solo && !flex) return null;
+  if (!solo) return flex;
+  if (!flex) return solo;
+  const soloNum = parseInt(solo.split('_')[1], 10);
+  const flexNum = parseInt(flex.split('_')[1], 10);
+  return soloNum >= flexNum ? solo : flex;
+}
+
+export async function getLastNRankedMatchIdsBothQueues(
+  puuid: string,
+  count: number
+): Promise<string[]> {
+  const [solo, flex] = await Promise.all([
+    getLastNRankedMatchIds(puuid, count, RANKED_SOLO_DUO),
+    getLastNRankedMatchIds(puuid, count, RANKED_FLEX),
+  ]);
+  return [...solo, ...flex]
+    .sort((a, b) => parseInt(b.split('_')[1], 10) - parseInt(a.split('_')[1], 10))
+    .slice(0, count);
 }
 
 export async function getMatchResult(matchId: string, puuid: string): Promise<MatchResult> {
