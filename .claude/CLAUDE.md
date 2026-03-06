@@ -95,23 +95,27 @@ docker compose up --build   # sobe redis + bot
 
 | Arquivo | Responsabilidade |
 |---------|-----------------|
-| `src/index.ts` | Entry point — Discord client, polling loop, slash commands |
+| `src/index.ts` | Entry point — Discord client, polling loop, slash commands, registro de handlers |
 | `src/config.ts` | `requireEnv(key)` — leitura de env vars obrigatórias |
-| `src/riot.ts` | Cliente Riot API: `getAccountByRiotId`, `getLastRankedMatchId`, `getMatchResult` |
-| `src/watcher.ts` | `pollPlayer(queue, puuid, gameName, tagLine, state)` — producer de jobs |
-| `src/shame.ts` | `isRankedDefeat(match)` — lógica pura de detecção |
-| `src/embed.ts` | `buildLossEmbed` (vermelho #ff0000) / `buildWinEmbed` (cinza #808080) |
-| `src/discord.ts` | `sendMessage(client, channelId, message: string \| EmbedBuilder)` |
-| `src/players.ts` | `loadPlayers()` / `savePlayers(players)` — Redis key `bot:players` |
-| `src/store.ts` | `loadState()` / `saveState(state)` — Redis key `bot:state` |
-| `src/commands.ts` | Lógica pura dos slash commands (addPlayer, removePlayer, formatPlayerList, resolveCheckNow) |
-| `src/stats.ts` | `emptyStats`, `updateStats`, `formatStats` — `PlayerStats: { wins, losses, streak }` |
-| `src/queue.ts` | `createMatchQueue()` — BullMQ fila `match-results`, retry 3x exponencial (2s) |
-| `src/matchWorker.ts` | `processMatchJob` / `createWorker(deps)` — consumer isolado |
-| `src/retry.ts` | `withRetry(fn, retries, delayMs)` — backoff exponencial |
-| `src/rateLimit.ts` | `RateLimiter(minIntervalMs)` — 50ms entre chamadas Riot API |
+| `src/riot/client.ts` | Cliente Riot API: `getAccountByRiotId`, `getLastRankedMatchId`, `getMatchResult` |
+| `src/riot/rateLimit.ts` | `RateLimiter(minIntervalMs)` — fila com intervalo mínimo entre chamadas Riot API |
+| `src/watcher/watcher.ts` | `pollPlayer(queue, puuid, gameName, tagLine, state)` — producer de jobs |
+| `src/watcher/shame.ts` | `isRankedDefeat`, `buildShameMessage`, `buildWinMessage`, `buildTiltMessage`, `SHAME_MESSAGES`, `WIN_MESSAGES`, `TILT_MESSAGES` |
+| `src/discord/embed.ts` | `buildLossEmbed` (vermelho #ff0000) / `buildWinEmbed` (cinza #808080) |
+| `src/discord/client.ts` | `sendMessage(client, channelId, message: string \| EmbedBuilder)` |
+| `src/discord/commands.ts` | Lógica pura dos slash commands (addPlayer, removePlayer, formatPlayerList, resolveCheckNow) |
+| `src/players/players.ts` | `loadPlayers()` / `savePlayers(players)` — Redis key `bot:players` |
+| `src/players/stats.ts` | `emptyStats`, `updateStats`, `formatStats` — `PlayerStats: { wins, losses, streak }` |
+| `src/queue/queue.ts` | `createMatchQueue()` — BullMQ fila `match-results`, retry 3x exponencial (2s) |
+| `src/queue/matchWorker.ts` | `processMatchJob(data, deps)` — busca Riot API, computa stats, emite `match:finished`; `createWorker(deps)` — BullMQ Worker |
+| `src/infra/eventBus.ts` | `TypedEventEmitter`, `BotEventMap`, `MatchFinishedEvent` — event bus tipado singleton |
+| `src/handlers/statsHandler.ts` | `statsHandler(event, deps)` — persiste `statsAfter` no Redis via `saveState` |
+| `src/handlers/discordHandler.ts` | `discordHandler(event, deps)` — envia embed de derrota ou vitória no Discord |
+| `src/handlers/streakHandler.ts` | `streakHandler(event, deps)` — envia mensagem de tilt quando streak `<= -3` |
+| `src/infra/store.ts` | `loadState()` / `saveState(state)` — Redis key `bot:state` |
+| `src/infra/retry.ts` | `withRetry(fn, retries, delayMs)` — backoff exponencial |
+| `src/infra/health.ts` | `GET /health` → `{ status: "ok", uptime: <número> }` na porta `PORT` (padrão 3000) |
 | `src/logger.ts` | Logs JSON estruturados (`timestamp`, `level`, `message`, meta) |
-| `src/health.ts` | `GET /health` → `{ status: "ok", uptime: <número> }` na porta `PORT` (padrão 3000) |
 
 ## Redis — Chaves em Produção
 
@@ -136,8 +140,7 @@ docker compose up --build   # sobe redis + bot
 
 ## Estado atual do projeto
 
-- **97 testes passando · 0 warnings · build limpo**
-- Cobertura: config/riot/shame/watcher/commands/stats/embed = 100% | index.ts = 0% (entry point, esperado)
-- `stats.ts`: 6 testes adicionados cobrindo textos literais de streak (zero/win/loss), sufixos V/D e acumulação sobre stats pré-existentes
+- **135 testes passando · 0 warnings · build limpo**
+- Cobertura: config/riot/shame/watcher/commands/stats/embed/eventBus/handlers = 100% | index.ts = 0% (entry point, esperado)
 - Bot em produção no Railway monitorando jogadores reais
-- Ciclo 3 concluído: Redis + BullMQ + `/check-now`
+- Ciclo 4 concluído: EventBus interno — `processMatchJob` delega via `match:finished`; handlers em `src/handlers/` isolados e testáveis
