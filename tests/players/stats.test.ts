@@ -74,4 +74,34 @@ describe('formatStats', () => {
   it('shows 0% winrate when no matches played', () => {
     expect(formatStats('Gabriel', emptyStats())).toContain('0%');
   });
+
+  it('shows "Nenhuma sequência ainda" when streak is zero', () => {
+    expect(formatStats('Gabriel', emptyStats())).toContain('Nenhuma sequência ainda');
+  });
+
+  it('shows win streak text with exact phrase', () => {
+    expect(formatStats('Gabriel', { wins: 3, losses: 0, streak: 3 })).toContain('3 vitória(s) seguida(s)');
+  });
+
+  it('shows loss streak text with exact phrase', () => {
+    expect(formatStats('Gabriel', { wins: 0, losses: 4, streak: -4 })).toContain('4 derrota(s) seguida(s)');
+  });
+
+  it('shows V/D suffixes in output', () => {
+    const result = formatStats('Gabriel', { wins: 7, losses: 3, streak: 1 });
+    expect(result).toContain('7V');
+    expect(result).toContain('3D');
+  });
+});
+
+describe('updateStats — acumulação sobre stats pré-existentes', () => {
+  it('acumula wins corretamente sobre stats não-zerados', () => {
+    const result = updateStats({ wins: 100, losses: 50, streak: 5 }, true);
+    expect(result).toEqual({ wins: 101, losses: 50, streak: 6 });
+  });
+
+  it('acumula losses corretamente sobre stats não-zerados', () => {
+    const result = updateStats({ wins: 100, losses: 50, streak: -3 }, false);
+    expect(result).toEqual({ wins: 100, losses: 51, streak: -4 });
+  });
 });

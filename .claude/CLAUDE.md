@@ -136,7 +136,8 @@ docker compose up --build   # sobe redis + bot
 
 ## Estado atual do projeto
 
-- **91 testes passando · 0 warnings · build limpo**
+- **97 testes passando · 0 warnings · build limpo**
 - Cobertura: config/riot/shame/watcher/commands/stats/embed = 100% | index.ts = 0% (entry point, esperado)
+- `stats.ts`: 6 testes adicionados cobrindo textos literais de streak (zero/win/loss), sufixos V/D e acumulação sobre stats pré-existentes
 - Bot em produção no Railway monitorando jogadores reais
 - Ciclo 3 concluído: Redis + BullMQ + `/check-now`
