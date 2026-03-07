@@ -23,6 +23,13 @@
 ## Testes GREEN antes da feature ranked match guard (matchWorker): 168
 ## Testes GREEN antes da feature watcher BothQueues: 173
 ## Testes GREEN apos implementacao completa da FEATURE-0002: 177
+## Testes RED criados para FEATURE-0003 (Player Lifecycle Events): +10 testes
+##   - 5 em tests/handlers/playerLifecycleHandler.test.ts (RED: modulo nao existe)
+##   - 5 em tests/infra/eventBus.test.ts (GREEN: TypedEventEmitter aceita strings livres via super.emit)
+##   NOTA: os 5 novos casos do eventBus.test.ts passaram imediatamente porque o Node EventEmitter
+##   nao valida chaves em tempo de execucao — apenas o TypeScript valida via BotEventMap.
+##   A validacao de tipo so ficara RED apos adicionar PlayerChangedEvent ao BotEventMap.
+##   Para forcar RED de compilacao basta que PlayerChangedEvent nao exista como export de eventBus.ts.
 
 ## Casos de borda cobertos — EventBus feature
 
@@ -122,6 +129,36 @@ Ver detalhes anteriores (13+ testes cobrindo streak, winrate, imutabilidade)
 **NOTA DE MOCK:** Para funcoes que usam Promise.all internamente, a ordem dos
 mockResolvedValueOnce deve corresponder a ordem em que as promises sao iniciadas
 (normalmente a ordem dos argumentos do Promise.all).
+
+## Casos de borda cobertos — FEATURE-0003 (RED em 2026-03-07)
+
+**playerLifecycleHandler:**
+- eventName='player:added' → log('info', 'player:added', { gameName, tagLine })
+- eventName='player:removed' → log('info', 'player:removed', { gameName, tagLine })
+- meta fields corretos (gameName e tagLine do evento)
+- log lanca excecao em player:added → nao propaga (try/catch)
+- log lanca excecao em player:removed → nao propaga (try/catch)
+
+**eventBus (novos casos player lifecycle):**
+- bus.emit('player:added', event) → listener recebe payload com gameName e tagLine
+- bus.emit('player:removed', event) → listener recebe payload com gameName e tagLine
+- player:added payload: gameName e tagLine corretos
+- player:removed payload: gameName e tagLine corretos
+- listener de player:added NAO é chamado quando player:removed é emitido
+
+**NOTA ARQUITETURAL sobre RED dos testes do eventBus:**
+Os 5 novos casos no eventBus.test.ts passam em runtime imediatamente (Node EventEmitter
+nao valida chaves), mas a importacao `import type { PlayerChangedEvent }` falha em
+compilacao quando PlayerChangedEvent nao existe em eventBus.ts. O RED real é o modulo
+playerLifecycleHandler.ts que nao existe, causando falha de suite inteira.
+
+**Padrão playerLifecycleHandler — deps injetadas:**
+```typescript
+interface PlayerLifecycleHandlerDeps {
+  log: (level: string, message: string, meta?: object) => void;
+}
+```
+O `log` é injetado (nao importado do logger), tornando o handler 100% testavel sem mock de modulo.
 
 ## Padroes de mock confirmados no projeto
 

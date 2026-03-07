@@ -1,11 +1,11 @@
 # Tech Lead — Memoria Persistente
 
 ## Estado atual do projeto
-- **166 testes passando** · 0 warnings · build limpo
+- **187 testes passando** · 0 warnings · build limpo
 - Bot em producao no Railway, canal unico via env var
 - Branch: master
-- Ciclo 5 concluido: /history slash command
-- ADR-0002 em andamento: shame.ts GREEN + riot/client.ts GREEN (parametro queue com default + BothQueues implementado)
+- Ciclo 6 concluido: Flex Queue Support (ADR-0002)
+- Ciclo 7 concluido: Player Lifecycle Events (FEATURE-0003)
 
 ## Estrutura de pastas (confirmada em 2026-03-06)
 ```
@@ -17,7 +17,7 @@ src/
   queue/      queue.ts, matchWorker.ts
   watcher/    watcher.ts, shame.ts
   infra/      store.ts, retry.ts, health.ts, eventBus.ts
-  handlers/   statsHandler.ts, discordHandler.ts, streakHandler.ts
+  handlers/   statsHandler.ts, discordHandler.ts, streakHandler.ts, playerLifecycleHandler.ts
 tests/         espelha src/
 .claude/plans/ ADRs e specs de features
 ```
@@ -64,8 +64,14 @@ tests/         espelha src/
 - Mitigacao implementada: todos os handlers em `src/handlers/` tem `try/catch` interno — funcoes async nunca lancam sincronamente
 - Ordem de conclusao async nao garantida (stats pode persitir apos Discord enviar) — risco aceito para este caso de uso
 
-### Limites de arquivos (pos-EventBus)
-- `src/index.ts`: 215 linhas (2026-03-06) — margem de ~85 linhas antes do limite
-- `src/watcher/shame.ts`: 97 linhas — pos ADR-0002 (constantes RANKED_FLEX/RANKED_QUEUES + isRankedMatch + queueLabel)
-- `src/queue/matchWorker.ts`: 56 linhas — encolheu como esperado apos ADR-0001
-- Novos handlers: 21-28 linhas cada — muito abaixo do limite
+### Limites de arquivos (pos-FEATURE-0003)
+- `src/index.ts`: ~248 linhas (2026-03-07) — margem de ~52 linhas antes do limite
+- `src/watcher/shame.ts`: 97 linhas — pos ADR-0002
+- `src/queue/matchWorker.ts`: 56 linhas
+- Handlers: 19-28 linhas cada — muito abaixo do limite
+- `src/infra/eventBus.ts`: 37 linhas — pos PlayerChangedEvent
+
+### PlayerLifecycleHandler — decisao de tipo
+- Interface `PlayerLifecycleHandlerDeps.log` usa `'info' | 'warn' | 'error'` (nao `string`)
+- Razao: `log` real em `logger.ts` usa `Level = 'info' | 'warn' | 'error'` — TypeScript rejeita `string` por contravariancia
+- `vi.fn()` nos testes aceita qualquer argumento em runtime — nao quebra os testes

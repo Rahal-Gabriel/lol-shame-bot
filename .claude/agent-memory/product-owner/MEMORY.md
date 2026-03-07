@@ -26,6 +26,14 @@
 - Vitoria tambem e notificada: embeds cinza (#808080) de parabens.
 - Streak positivo especial (ex: 3 vitorias seguidas) NAO entra no escopo do FEATURE-0001.
 
+### FEATURE-0003: Player Lifecycle Events
+- **Arquivo:** `.claude/plans/FEATURE-0003-player-lifecycle-events.md`
+- **Status:** Pronto para Dev
+- **Decisao chave:** Handler inicial e apenas log estruturado (sem embed no Discord). Embed publico de add/remove foi descartado — ruido para o grupo, admin ja ve resposta efemera do slash command.
+- **Evento so dispara se lista mudar:** deteccao por comparacao de tamanho antes/depois; `commands.ts` nao e alterado.
+- **Novo arquivo esperado:** `src/handlers/playerLifecycleHandler.ts` com `deps` injetadas (log como dependencia).
+- **Registro no eventBus:** dois `on` em `index.ts`, um para `player:added` e outro para `player:removed`.
+
 ## Backlog nao priorizado
 
 - Mensagens personalizadas por jogador (apelidos, frases customizadas)
