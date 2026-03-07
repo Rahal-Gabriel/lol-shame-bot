@@ -10,8 +10,15 @@ export interface MatchFinishedEvent {
   statsAfter: PlayerStats;
 }
 
+export interface PlayerChangedEvent {
+  gameName: string;
+  tagLine: string;
+}
+
 export interface BotEventMap {
   'match:finished': [event: MatchFinishedEvent];
+  'player:added':   [event: PlayerChangedEvent];
+  'player:removed': [event: PlayerChangedEvent];
 }
 
 export class TypedEventEmitter extends EventEmitter {

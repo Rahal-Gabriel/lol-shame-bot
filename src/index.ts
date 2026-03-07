@@ -15,6 +15,7 @@ import { eventBus } from './infra/eventBus';
 import { statsHandler } from './handlers/statsHandler';
 import { discordHandler } from './handlers/discordHandler';
 import { streakHandler } from './handlers/streakHandler';
+import { playerLifecycleHandler } from './handlers/playerLifecycleHandler';
 import { buildLossEmbed, buildWinEmbed, buildHistoryEmbed } from './discord/embed';
 import { sendMessage } from './discord/client';
 import { log } from './logger';
@@ -96,6 +97,7 @@ async function handleInteraction(
       await interaction.reply({ content: `${input} já está na lista.`, ephemeral: true });
     } else {
       await savePlayers(updated);
+      eventBus.emit('player:added', { gameName: parsed.gameName, tagLine: parsed.tagLine });
       await interaction.reply({ content: `✅ ${input} adicionado!`, ephemeral: true });
     }
     return updated;
@@ -107,6 +109,7 @@ async function handleInteraction(
       await interaction.reply({ content: `${input} não encontrado na lista.`, ephemeral: true });
     } else {
       await savePlayers(updated);
+      eventBus.emit('player:removed', { gameName: parsed.gameName, tagLine: parsed.tagLine });
       await interaction.reply({ content: `🗑️ ${input} removido.`, ephemeral: true });
     }
     return updated;
@@ -160,6 +163,9 @@ client.once('clientReady', async (c) => {
   eventBus.on('match:finished', async (event) => {
     await streakHandler(event, { client, channelId, sendMessage });
   });
+
+  eventBus.on('player:added',   (e) => playerLifecycleHandler('player:added',   e, { log }));
+  eventBus.on('player:removed', (e) => playerLifecycleHandler('player:removed', e, { log }));
 
   createWorker({ botState, eventBus });
 

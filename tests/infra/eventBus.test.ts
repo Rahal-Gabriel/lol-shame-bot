@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { TypedEventEmitter, eventBus } from '../../src/infra/eventBus';
-import type { MatchFinishedEvent } from '../../src/infra/eventBus';
+import type { MatchFinishedEvent, PlayerChangedEvent } from '../../src/infra/eventBus';
 
 const makeEvent = (overrides: Partial<MatchFinishedEvent> = {}): MatchFinishedEvent => ({
   gameName: 'GatoMakonha',
@@ -83,6 +83,69 @@ describe('eventBus singleton', () => {
 
     expect(listener).toHaveBeenCalledWith(event);
     eventBus.removeListener('match:finished', listener);
+  });
+});
+
+describe('BotEventMap — player lifecycle events', () => {
+  it('fires listener with correct payload when player:added is emitted', () => {
+    const bus = new TypedEventEmitter();
+    const listener = vi.fn();
+    const event: PlayerChangedEvent = { gameName: 'GatoMakonha', tagLine: 'T2F' };
+
+    bus.on('player:added', listener);
+    bus.emit('player:added', event);
+
+    expect(listener).toHaveBeenCalledOnce();
+    expect(listener).toHaveBeenCalledWith(event);
+  });
+
+  it('fires listener with correct payload when player:removed is emitted', () => {
+    const bus = new TypedEventEmitter();
+    const listener = vi.fn();
+    const event: PlayerChangedEvent = { gameName: 'OutroJogador', tagLine: 'BR1' };
+
+    bus.on('player:removed', listener);
+    bus.emit('player:removed', event);
+
+    expect(listener).toHaveBeenCalledOnce();
+    expect(listener).toHaveBeenCalledWith(event);
+  });
+
+  it('player:added payload carries gameName and tagLine fields', () => {
+    const bus = new TypedEventEmitter();
+    const listener = vi.fn();
+    const event: PlayerChangedEvent = { gameName: 'Faker', tagLine: 'KR1' };
+
+    bus.on('player:added', event => listener(event));
+    bus.emit('player:added', event);
+
+    const received = listener.mock.calls[0][0] as PlayerChangedEvent;
+    expect(received.gameName).toBe('Faker');
+    expect(received.tagLine).toBe('KR1');
+  });
+
+  it('player:removed payload carries gameName and tagLine fields', () => {
+    const bus = new TypedEventEmitter();
+    const listener = vi.fn();
+    const event: PlayerChangedEvent = { gameName: 'Caps', tagLine: 'EUW1' };
+
+    bus.on('player:removed', event => listener(event));
+    bus.emit('player:removed', event);
+
+    const received = listener.mock.calls[0][0] as PlayerChangedEvent;
+    expect(received.gameName).toBe('Caps');
+    expect(received.tagLine).toBe('EUW1');
+  });
+
+  it('player:added listener is not called if player:removed is emitted', () => {
+    const bus = new TypedEventEmitter();
+    const addedListener = vi.fn();
+    const event: PlayerChangedEvent = { gameName: 'GatoMakonha', tagLine: 'T2F' };
+
+    bus.on('player:added', addedListener);
+    bus.emit('player:removed', event);
+
+    expect(addedListener).not.toHaveBeenCalled();
   });
 });
 
