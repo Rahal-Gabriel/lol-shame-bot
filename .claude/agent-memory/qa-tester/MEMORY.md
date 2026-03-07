@@ -18,7 +18,11 @@
 | `src/queue/matchWorker.ts` | 100% | refatorado para eventBus, auditado em 2026-03-06 |
 | `src/index.ts` | 0% | entry point com env vars — esperado |
 
-## Total de testes: 135 (estado em 2026-03-06)
+## Total de testes: 177 (177 passando — todos GREEN em 2026-03-07)
+## Testes GREEN antes da feature BothQueues: 158
+## Testes GREEN antes da feature ranked match guard (matchWorker): 168
+## Testes GREEN antes da feature watcher BothQueues: 173
+## Testes GREEN apos implementacao completa da FEATURE-0002: 177
 
 ## Casos de borda cobertos — EventBus feature
 
@@ -76,6 +80,48 @@ function makeEventBus(): TypedEventEmitter {
 ## Casos de borda cobertos em stats.ts
 
 Ver detalhes anteriores (13+ testes cobrindo streak, winrate, imutabilidade)
+
+## Casos de borda cobertos — FEATURE-0002 (todos GREEN em 2026-03-07)
+
+**getLastRankedMatchId com parametro queue opcional:**
+- queue: 440 → params.queue: 440 na chamada axios
+- sem queue → backward compat: params.queue: 420
+
+**getLastRankedMatchIdBothQueues:**
+- BR1_200 > BR1_100 → retorna BR1_200 (comparacao por sufixo numerico)
+- uma fila vazia → retorna o id da fila com partidas
+- ambas vazias → retorna null
+- chama axios exatamente 2x: uma com queue 420, outra com 440
+
+**getLastNRankedMatchIdsBothQueues:**
+- merge + sort desc + slice(0, count): ['BR1_5','BR1_3'] + ['BR1_4','BR1_2'] → ['BR1_5','BR1_4','BR1_3'] (count=3)
+- uma fila vazia → retorna apenas os da outra fila
+- ambas vazias → []
+
+**ranked match guard no matchWorker:**
+- Flex defeat (queueId 440) → emite match:finished com isDefeat: true
+- Flex victory (queueId 440) → emite match:finished com isDefeat: false
+- ARAM (queueId 450) → NAO emite evento
+- unknown queue (queueId 999) → NAO emite evento
+
+**pollPlayer com getLastRankedMatchIdBothQueues:**
+- new match detected → queue.add com matchId correto
+- match already seen → queue.add NAO chamado
+- no match (null) → queue.add NAO chamado
+- Flex match (BR1_300) → queue.add chamado
+
+**Embeds com label de fila:**
+- buildLossEmbed: campo "Fila" = "Solo/Duo" para queueId 420, "Flex" para queueId 440
+- buildWinEmbed: campo "Fila" = "Solo/Duo" para queueId 420, "Flex" para queueId 440
+- buildHistoryEmbed: label "Solo/Duo" na linha de win para queueId 420, "Flex" para queueId 440
+
+**Lacunas de baixo risco identificadas (nao bloqueantes):**
+- isRankedMatch: sem teste unitario explicito para { won: true, queueId: 440 } (coberto indiretamente pelo matchWorker)
+- buildHistoryEmbed: sem teste para loss Flex (queueId 440) — logica usa queueLabel identicamente para win e loss
+
+**NOTA DE MOCK:** Para funcoes que usam Promise.all internamente, a ordem dos
+mockResolvedValueOnce deve corresponder a ordem em que as promises sao iniciadas
+(normalmente a ordem dos argumentos do Promise.all).
 
 ## Padroes de mock confirmados no projeto
 

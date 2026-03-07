@@ -1,10 +1,11 @@
 # Tech Lead — Memoria Persistente
 
 ## Estado atual do projeto
-- **135 testes passando** · 0 warnings · build limpo
+- **166 testes passando** · 0 warnings · build limpo
 - Bot em producao no Railway, canal unico via env var
 - Branch: master
-- Ciclo 4 concluido: EventBus + handlers isolados
+- Ciclo 5 concluido: /history slash command
+- ADR-0002 em andamento: shame.ts GREEN + riot/client.ts GREEN (parametro queue com default + BothQueues implementado)
 
 ## Estrutura de pastas (confirmada em 2026-03-06)
 ```
@@ -22,6 +23,17 @@ tests/         espelha src/
 ```
 
 ## Decisoes de arquitetura registradas
+
+### ADR-0002: Flex Queue Support (queue 440) — Proposto
+- Ver `/Users/gabrielarcenio/lol-shame-bot/.claude/plans/ADR-0002-flex-queue-support.md`
+- `MatchResult.queueId` ja existe — zero breaking change nesse campo
+- Constantes `RANKED_FLEX=440`, `RANKED_QUEUES`, `isRankedMatch`, `queueLabel` adicionadas em `shame.ts`
+- `isRankedDefeat` mantida sem mudanca (backward compatible)
+- `riot/client.ts` GREEN: `getLastRankedMatchId(puuid, queue=420)`, `getLastNRankedMatchIds(puuid, count, queue=420)`, `getLastRankedMatchIdBothQueues`, `getLastNRankedMatchIdsBothQueues` — backward compatible (defaults preservam assinaturas anteriores)
+- Embeds: field "Fila" adicionado internamente (assinaturas preservadas)
+- `buildHistoryEmbed`: label por linha no value, antes do KDA
+- Stats unificadas (Solo + Flex) — separacao por fila e backlog
+- Dois `Promise.all` paralelos (um por queue) para deteccao e history
 
 ### ADR-0001: EventBus interno para match processing
 - Ver `/Users/gabrielarcenio/lol-shame-bot/.claude/plans/ADR-0001-event-driven-architecture.md`
@@ -54,6 +66,6 @@ tests/         espelha src/
 
 ### Limites de arquivos (pos-EventBus)
 - `src/index.ts`: 215 linhas (2026-03-06) — margem de ~85 linhas antes do limite
-- `src/watcher/shame.ts`: 84 linhas — incluindo TILT_MESSAGES
+- `src/watcher/shame.ts`: 97 linhas — pos ADR-0002 (constantes RANKED_FLEX/RANKED_QUEUES + isRankedMatch + queueLabel)
 - `src/queue/matchWorker.ts`: 56 linhas — encolheu como esperado apos ADR-0001
 - Novos handlers: 21-28 linhas cada — muito abaixo do limite

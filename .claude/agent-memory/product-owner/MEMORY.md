@@ -2,6 +2,15 @@
 
 ## Features especificadas
 
+### FEATURE-0002: Flex Queue Support
+- **Arquivo:** `.claude/plans/FEATURE-0002-flex-queue-support.md`
+- **Status:** Pronto para Dev
+- **Decisao chave:** Stats continuam unificadas (Solo + Flex) — sem separacao por fila nesta entrega.
+- **Queues suportadas:** 420 (Solo/Duo) e 440 (Flex). Demais filas ignoradas.
+- **Label de fila:** embeds e `/history` passam a exibir `[Solo/Duo]` ou `[Flex]`.
+- **Funcao nova esperada:** `queueLabel(queueId)` em `src/watcher/shame.ts`; `isRankedMatch` substituindo logica de `isRankedDefeat` para aceitar ambas as filas.
+- **Sem retroativo:** partidas Flex anteriores ao deploy nao sao reprocessadas.
+
 ### FEATURE-0001: Event-Driven Match Processing
 - **Arquivo:** `.claude/plans/FEATURE-0001-event-driven-match.md`
 - **Status:** Pronto para Dev
